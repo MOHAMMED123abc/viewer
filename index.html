@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ESP32 Tank Data</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  </head>
+  <body>
+    <h1>📊 بيانات ESP32</h1>
+    <div id="tankLevel">جاري تحميل البيانات...</div>
+
+    <script>
+      // إعدادات Firebase الخاصة بك
+      const firebaseConfig = {
+        apiKey: "AIzaSyAYge0HyYiL0-vlXnnlB_FqAZvocb_lz9Y",  // أدخل المفتاح من Firebase
+        authDomain: "esp32-tank-project.firebaseapp.com",
+        databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "esp32-tank-project",
+        storageBucket: "esp32-tank-project.appspot.com",
+        messagingSenderId: "512526180917",
+        appId: "1:512526180917:web:b28201cf73d23bc327c77c"
+      };
+
+      // تهيئة Firebase
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+
+      // قراءة البيانات من المسار esp32/tank
+      const dataRef = database.ref("esp32/tank");
+
+      dataRef.on("value", (snapshot) => {
+        const data = snapshot.val();
+        document.getElementById("tankLevel").innerText = "🛢️ مستوى الخزان: " + data + " لتر";
+      });
+    </script>
+  </body>
+</html>
