@@ -1,529 +1,519 @@
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moniteur de Niveau de Liquide</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts - Inter for a modern look -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f0f4f8; /* Light blue-gray background */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 0.5rem; /* Reduced padding for full screen feel */
-    }
-    #app-container {
-      background-color: #ffffff;
-      width: 100%;
-      max-width: 420px;
-      min-height: 95vh; /* Make it take more vertical space */
-      border-radius: 2.5rem; /* More pronounced rounded corners */
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2); /* Stronger, modern shadow */
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-    }
-    .app-title {
-      padding: 1.5rem 1.5rem 1rem;
-      text-align: center;
-      font-weight: 700;
-      font-size: 1.6rem; /* Consistent header size */
-      color: #2c3e50;
-      position: relative;
-      background-color: #ffffff;
-    }
-    .card {
-      background-color: #ffffff;
-      border-radius: 1.75rem; /* Larger rounded corners for cards */
-      box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.1); /* Deeper shadow for cards */
-      padding: 2rem;
-      margin: 1.5rem; /* Default margin for cards */
-    }
-    .status-badge {
-      background-color: #28a745; /* Green for connected */
-      color: white;
-      padding: 0.4rem 1.2rem;
-      border-radius: 1.5rem; /* Pill shape */
-      font-size: 0.95rem;
-      font-weight: 600;
-      display: inline-block;
-      margin-bottom: 1rem;
-    }
-    .liquid-level-visual {
-      width: 120px; /* Consistent width */
-      height: 280px; /* Significantly taller visual */
-      border: 4px solid #cbd5e1;
-      border-radius: 1.5rem;
-      overflow: hidden;
-      position: relative;
-      background-color: #eef2f6;
-      display: flex;
-      flex-direction: column-reverse; /* Fill from bottom */
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.05); /* Inner shadow for depth */
-    }
-    .liquid-fill {
-      width: 100%;
-      background: linear-gradient(to top, #3498db, #5dade2); /* Gradient for water */
-      transition: height 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    .liquid-markers {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-around;
-      align-items: center;
-      padding: 10px 0;
-    }
-    .liquid-marker {
-      width: 60%;
-      height: 2px;
-      background-color: rgba(255, 255, 255, 0.5);
-      border-radius: 1px;
-    }
-    .bottom-nav {
-      background-color: #ffffff;
-      border-top: 1px solid #eef2f6;
-      display: flex;
-      justify-content: center; /* Centered for single item */
-      padding: 1rem 0;
-      position: sticky;
-      bottom: 0;
-      width: 100%;
-      border-bottom-left-radius: 2.5rem;
-      border-bottom-right-radius: 2.5rem;
-      box-shadow: 0 -8px 20px -5px rgba(0, 0, 0, 0.08);
-      z-index: 10;
-    }
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #94a3b8;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: color 0.3s ease-in-out, transform 0.2s ease-in-out;
-      padding: 0.6rem;
-    }
-    .nav-item:hover {
-      transform: translateY(-3px);
-    }
-    .nav-item.active {
-      color: #3498db;
-    }
-    .nav-item i {
-      font-size: 1.5rem;
-      margin-bottom: 0.4rem;
-    }
-    .tab-button {
-      padding: 0.6rem 1.2rem; /* Slightly reduced padding */
-      border-radius: 1.25rem;
-      font-weight: 600;
-      color: #64748b;
-      background-color: #f8fafc;
-      transition: all 0.3s ease-in-out;
-      min-width: 60px; /* Reduced min-width */
-      text-align: center;
-      font-size: 0.8rem; /* Further reduced font size for tabs */
-    }
-    .tab-button.active {
-      background-color: #3498db;
-      color: white;
-      box-shadow: 0 6px 18px -6px rgba(52, 152, 219, 0.5);
-    }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moniteur de Niveau de Liquide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f4f8; /* Light blue-gray background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0.5rem; /* Reduced padding for full screen feel */
+    }
+    #app-container {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 420px;
+      min-height: 95vh; /* Make it take more vertical space */
+      border-radius: 2.5rem; /* More pronounced rounded corners */
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2); /* Stronger, modern shadow */
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .app-title {
+      padding: 1.5rem 1.5rem 1rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.6rem; /* Consistent header size */
+      color: #2c3e50;
+      position: relative;
+      background-color: #ffffff;
+    }
+    .card {
+      background-color: #ffffff;
+      border-radius: 1.75rem; /* Larger rounded corners for cards */
+      box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.1); /* Deeper shadow for cards */
+      padding: 2rem;
+      margin: 1.5rem; /* Default margin for cards */
+    }
+    .status-badge {
+      background-color: #28a745; /* Green for connected */
+      color: white;
+      padding: 0.4rem 1.2rem;
+      border-radius: 1.5rem; /* Pill shape */
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+    .liquid-level-visual {
+      width: 120px; /* Consistent width */
+      height: 280px; /* Significantly taller visual */
+      border: 4px solid #cbd5e1;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      position: relative;
+      background-color: #eef2f6;
+      display: flex;
+      flex-direction: column-reverse; /* Fill from bottom */
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.05); /* Inner shadow for depth */
+    }
+    .liquid-fill {
+      width: 100%;
+      background: linear-gradient(to top, #3498db, #5dade2); /* Gradient for water */
+      transition: height 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .liquid-markers {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 0;
+    }
+    .liquid-marker {
+      width: 60%;
+      height: 2px;
+      background-color: rgba(255, 255, 255, 0.5);
+      border-radius: 1px;
+    }
+    .bottom-nav {
+      background-color: #ffffff;
+      border-top: 1px solid #eef2f6;
+      display: flex;
+      justify-content: center; /* Centered for single item */
+      padding: 1rem 0;
+      position: sticky;
+      bottom: 0;
+      width: 100%;
+      border-bottom-left-radius: 2.5rem;
+      border-bottom-right-radius: 2.5rem;
+      box-shadow: 0 -8px 20px -5px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.3s ease-in-out, transform 0.2s ease-in-out;
+      padding: 0.6rem;
+    }
+    .nav-item:hover {
+      transform: translateY(-3px);
+    }
+    .nav-item.active {
+      color: #3498db;
+    }
+    .nav-item i {
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .tab-button {
+      padding: 0.6rem 1.2rem; /* Slightly reduced padding */
+      border-radius: 1.25rem;
+      font-weight: 600;
+      color: #64748b;
+      background-color: #f8fafc;
+      transition: all 0.3s ease-in-out;
+      min-width: 60px; /* Reduced min-width */
+      text-align: center;
+      font-size: 0.8rem; /* Further reduced font size for tabs */
+    }
+    .tab-button.active {
+      background-color: #3498db;
+      color: white;
+      box-shadow: 0 6px 18px -6px rgba(52, 152, 219, 0.5);
+    }
 
-    /* Canvas specific styles */
-    #chartCanvas {
-      width: 100%;
-      height: 220px; /* Taller chart */
-      background-color: #fdfefe;
-      border-radius: 1rem;
-      margin-top: 1.8rem;
-      box-shadow: inset 0 0 8px rgba(0,0,0,0.03);
-    }
+    /* Canvas specific styles */
+    #chartCanvas {
+      width: 100%;
+      height: 220px; /* Taller chart */
+      background-color: #fdfefe;
+      border-radius: 1rem;
+      margin-top: 1.8rem;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.03);
+    }
 
-    /* Font sizes for mobile optimization */
-    .text-2xl { font-size: 1.5rem; }
-    .text-5xl { font-size: 3.5rem; }
-    .text-xl { font-size: 1.15rem; }
-    .text-3xl { font-size: 1.75rem; }
-  </style>
+    /* Font sizes for mobile optimization */
+    .text-2xl { font-size: 1.5rem; }
+    .text-5xl { font-size: 3.5rem; }
+    .text-xl { font-size: 1.15rem; }
+    .text-3xl { font-size: 1.75rem; }
+  </style>
 </head>
 <body>
-  <div id="app-container">
-    <!-- App Title -->
-    <div class="app-title">
-      Moniteur de Niveau de Liquide
-    </div>
+  <div id="app-container">
+        <div class="app-title">
+      Moniteur de Niveau de Liquide
+    </div>
 
-    <!-- Main Content Area (Scrollable) -->
-    <div class="flex-grow overflow-y-auto">
-      <!-- Liquid Level Card -->
-      <div class="card flex items-center justify-between">
-        <div>
-          <span class="status-badge">Connecté</span>
-          <div class="text-2xl font-bold text-gray-800 mt-2">Ratio de Niveau</div>
-          <div id="liquidLevelPercentage" class="text-5xl font-extrabold text-blue-600 mt-2">--%</div>
-          <div class="text-xl font-bold text-gray-800 mt-4">Profondeur du Liquide</div>
-          <div id="liquidDepth" class="text-3xl font-bold text-gray-600 mt-1">-- m</div>
-          <div class="text-xl font-bold text-gray-800 mt-4">Statut du Liquide</div>
-          <div id="liquidStatus" class="text-3xl font-bold text-gray-600 mt-1">--</div>
+        <div class="flex-grow overflow-y-auto">
+            <div class="card flex items-center justify-between">
+        <div>
+          <span class="status-badge">Connecté</span>
+          <div class="text-2xl font-bold text-gray-800 mt-2">Ratio de Niveau</div>
+          <div id="liquidLevelPercentage" class="text-5xl font-extrabold text-blue-600 mt-2">--%</div>
+          <div class="text-xl font-bold text-gray-800 mt-4">Profondeur du Liquide</div>
+          <div id="liquidDepth" class="text-3xl font-bold text-gray-600 mt-1">-- m</div>
+          <div class="text-xl font-bold text-gray-800 mt-4">Statut du Liquide</div>
+          <div id="liquidStatus" class="text-3xl font-bold text-gray-600 mt-1">--</div>
 
-          <!-- Sensor Battery Status -->
-          <div class="text-xl font-bold text-gray-800 mt-4">Batterie du Capteur</div>
-          <div id="sensorBattery" class="text-3xl font-bold text-gray-600 mt-1 flex items-center">
-            <i class="fas fa-battery-empty text-gray-400 mr-2"></i> --%
-          </div>
-        </div>
-        <div class="liquid-level-visual">
-          <div id="liquidFill" class="liquid-fill" style="height: 0%;"></div>
-          <div class="liquid-markers">
-            <div class="liquid-marker"></div>
-            <div class="liquid-marker"></div>
-            <div class="liquid-marker"></div>
-            <div class="liquid-marker"></div>
-          </div>
-        </div>
-      </div>
+                    <div class="text-xl font-bold text-gray-800 mt-4">Batterie du Capteur</div>
+          <div id="sensorBattery" class="text-3xl font-bold text-gray-600 mt-1 flex items-center">
+            <i class="fas fa-battery-empty text-gray-400 mr-2"></i> --%
+          </div>
+        </div>
+        <div class="liquid-level-visual">
+          <div id="liquidFill" class="liquid-fill" style="height: 0%;"></div>
+          <div class="liquid-markers">
+            <div class="liquid-marker"></div>
+            <div class="liquid-marker"></div>
+            <div class="liquid-marker"></div>
+            <div class="liquid-marker"></div>
+          </div>
+        </div>
+      </div>
 
-      <!-- Liquid Level Statistics Card -->
-      <div class="card">
-        <div class="text-xl font-bold text-gray-800 mb-4">Statistiques de Niveau de Liquide</div>
-        <div class="flex bg-gray-100 rounded-2xl p-1 mb-4 w-fit mx-auto">
-          <button id="dayTab" class="tab-button">Jour</button>
-          <button id="weekTab" class="tab-button ml-2 active">Semaine</button>
-          <button id="monthTab" class="tab-button ml-2">Mois</button>
-          <button id="yearTab" class="tab-button ml-2">Année</button>
-        </div>
-        <canvas id="chartCanvas"></canvas>
-      </div>
-    </div>
+            <div class="card">
+        <div class="text-xl font-bold text-gray-800 mb-4">Statistiques de Niveau de Liquide</div>
+        <div class="flex justify-center bg-gray-100 rounded-2xl p-1 mb-4 mx-auto">
+          <button id="dayTab" class="tab-button">Jour</button>
+          <button id="weekTab" class="tab-button ml-2 active">Semaine</button>
+          <button id="monthTab" class="tab-button ml-2">Mois</button>
+          <button id="yearTab" class="tab-button ml-2">Année</button>
+        </div>
+        <canvas id="chartCanvas"></canvas>
+      </div>
+    </div>
 
-    <!-- Bottom Navigation Bar -->
-    <div class="bottom-nav">
-      <div class="nav-item active">
-        <i class="fas fa-home"></i>
-        <span>Accueil</span>
-      </div>
-    </div>
-  </div>
+        <div class="bottom-nav">
+      <div class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span>Accueil</span>
+      </div>
+    </div>
+  </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
-    };
-    firebase.initializeApp(firebaseConfig);
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-    const db = firebase.database();
+    const db = firebase.database();
 
-    // Get device ID from URL parameters
-    const params = new URLSearchParams(window.location.search);
-    const deviceId = params.get('device');
+    // Get device ID from URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const deviceId = params.get('device');
 
-    // UI elements
-    const liquidFill = document.getElementById('liquidFill');
-    const liquidLevelPercentage = document.getElementById('liquidLevelPercentage');
-    const liquidDepth = document.getElementById('liquidDepth');
-    const liquidStatus = document.getElementById('liquidStatus');
-    const sensorBattery = document.getElementById('sensorBattery');
+    // UI elements
+    const liquidFill = document.getElementById('liquidFill');
+    const liquidLevelPercentage = document.getElementById('liquidLevelPercentage');
+    const liquidDepth = document.getElementById('liquidDepth');
+    const liquidStatus = document.getElementById('liquidStatus');
+    const sensorBattery = document.getElementById('sensorBattery');
 
-    // Define total tank depth for calculation (adjust as per your tank's actual depth in meters)
-    const TOTAL_TANK_DEPTH = 2.0; // Example: 2.0 meters
+    // Define total tank depth for calculation (adjust as per your tank's actual depth in meters)
+    const TOTAL_TANK_DEPTH = 2.0; // Example: 2.0 meters
 
-    function updateLiquidLevel(percentage, depth, status, batteryPercentage) {
-      liquidFill.style.height = `${percentage}%`;
-      liquidLevelPercentage.textContent = `${percentage}%`;
-      liquidDepth.textContent = `${depth.toFixed(2)} m`;
-      
-      // Update battery status display
-      const batteryIcon = sensorBattery.querySelector('i');
-      batteryIcon.classList.remove('text-green-500', 'text-yellow-500', 'text-red-500', 'fa-battery-full', 'fa-battery-three-quarters', 'fa-battery-half', 'fa-battery-quarter', 'fa-battery-empty');
-      sensorBattery.lastChild.textContent = ` ${batteryPercentage}%`; // Update text content
+    function updateLiquidLevel(percentage, depth, status, batteryPercentage) {
+      liquidFill.style.height = `${percentage}%`;
+      liquidLevelPercentage.textContent = `${percentage}%`;
+      liquidDepth.textContent = `${depth.toFixed(2)} m`;
+      
+      // Update battery status display
+      const batteryIcon = sensorBattery.querySelector('i');
+      batteryIcon.classList.remove('text-green-500', 'text-yellow-500', 'text-red-500', 'fa-battery-full', 'fa-battery-three-quarters', 'fa-battery-half', 'fa-battery-quarter', 'fa-battery-empty');
+      sensorBattery.lastChild.textContent = ` ${batteryPercentage}%`; // Update text content
 
-      if (batteryPercentage > 75) {
-        batteryIcon.classList.add('fa-battery-full', 'text-green-500');
-      } else if (batteryPercentage > 50) {
-        batteryIcon.classList.add('fa-battery-three-quarters', 'text-green-500');
-      } else if (batteryPercentage > 25) {
-        batteryIcon.classList.add('fa-battery-half', 'text-yellow-500');
-      } else if (batteryPercentage > 10) {
-        batteryIcon.classList.add('fa-battery-quarter', 'text-red-500');
-      } else {
-        batteryIcon.classList.add('fa-battery-empty', 'text-red-500');
-      }
+      if (batteryPercentage > 75) {
+        batteryIcon.classList.add('fa-battery-full', 'text-green-500');
+      } else if (batteryPercentage > 50) {
+        batteryIcon.classList.add('fa-battery-three-quarters', 'text-green-500');
+      } else if (batteryPercentage > 25) {
+        batteryIcon.classList.add('fa-battery-half', 'text-yellow-500');
+      } else if (batteryPercentage > 10) {
+        batteryIcon.classList.add('fa-battery-quarter', 'text-red-500');
+      } else {
+        batteryIcon.classList.add('fa-battery-empty', 'text-red-500');
+      }
 
-      // Update status color based on level
-      liquidStatus.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600', 'text-gray-600');
-      if (percentage < 30) {
-        liquidStatus.classList.add('text-red-600');
-        liquidStatus.textContent = 'Faible';
-      } else if (percentage < 60) {
-        liquidStatus.classList.add('text-yellow-600');
-        liquidStatus.textContent = 'Moyen';
-      } else {
-        liquidStatus.classList.add('text-green-600');
-        liquidStatus.textContent = 'Normal';
-      }
-    }
+      // Update status color based on level
+      liquidStatus.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600', 'text-gray-600');
+      if (percentage < 30) {
+        liquidStatus.classList.add('text-red-600');
+        liquidStatus.textContent = 'Faible';
+      } else if (percentage < 60) {
+        liquidStatus.classList.add('text-yellow-600');
+        liquidStatus.textContent = 'Moyen';
+      } else {
+        liquidStatus.classList.add('text-green-600');
+        liquidStatus.textContent = 'Normal';
+      }
+    }
 
-    // Chart Drawing Logic (kept as dummy for now, but ready for real data)
-    const chartCanvas = document.getElementById('chartCanvas');
-    const ctx = chartCanvas.getContext('2d');
+    // Chart Drawing Logic (kept as dummy for now, but ready for real data)
+    const chartCanvas = document.getElementById('chartCanvas');
+    const ctx = chartCanvas.getContext('2d');
 
-    let currentChartData = [];
-    let currentLabels = [];
-    let currentDataType = 'week'; // Default to 'week'
+    let currentChartData = [];
+    let currentLabels = [];
+    let currentDataType = 'week'; // Default to 'week'
 
-    // Dummy data generation functions (replace with Firebase historical data fetching)
-    function generateDayData() {
-      const data = [];
-      for (let i = 0; i <= 23; i += 2) {
-        const value = Math.floor(Math.random() * (95 - 60 + 1)) + 60;
-        data.push({ time: `${String(i).padStart(2, '0')}h`, value: value });
-      }
-      return data;
-    }
+    // Dummy data generation functions (replace with Firebase historical data fetching)
+    function generateDayData() {
+      const data = [];
+      for (let i = 0; i <= 23; i += 2) {
+        const value = Math.floor(Math.random() * (95 - 60 + 1)) + 60;
+        data.push({ time: `${String(i).padStart(2, '0')}h`, value: value });
+      }
+      return data;
+    }
 
-    function generateWeekData() {
-      const data = [];
-      const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-      const todayIndex = new Date().getDay();
-      for (let i = 0; i < 7; i++) {
-        const dayIndex = (todayIndex + i) % 7;
-        const value = Math.floor(Math.random() * (90 - 50 + 1)) + 50;
-        data.push({ time: days[dayIndex], value: value });
-      }
-      return data;
-    }
+    function generateWeekData() {
+      const data = [];
+      const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+      const todayIndex = new Date().getDay();
+      for (let i = 0; i < 7; i++) {
+        const dayIndex = (todayIndex + i) % 7;
+        const value = Math.floor(Math.random() * (90 - 50 + 1)) + 50;
+        data.push({ time: days[dayIndex], value: value });
+      }
+      return data;
+    }
 
-    function generateMonthData() {
-      const data = [];
-      for (let i = 1; i <= 30; i += 5) {
-        const value = Math.floor(Math.random() * (80 - 40 + 1)) + 40;
-        data.push({ time: `${i} J`, value: value });
-      }
-      return data;
-    }
+    function generateMonthData() {
+      const data = [];
+      for (let i = 1; i <= 30; i += 5) {
+        const value = Math.floor(Math.random() * (80 - 40 + 1)) + 40;
+        data.push({ time: `${i} J`, value: value });
+      }
+      return data;
+    }
 
-    function generateYearData() {
-      const data = [];
-      const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-      for (let i = 0; i < 12; i++) {
-        const value = Math.floor(Math.random() * (70 - 30 + 1)) + 30;
-        data.push({ time: months[i], value: value });
-      }
-      return data;
-    }
+    function generateYearData() {
+      const data = [];
+      const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+      for (let i = 0; i < 12; i++) {
+        const value = Math.floor(Math.random() * (70 - 30 + 1)) + 30;
+        data.push({ time: months[i], value: value });
+      }
+      return data;
+    }
 
-    function drawChart(data, labels) {
-      ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+    function drawChart(data, labels) {
+      ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
 
-      const dpi = window.devicePixelRatio;
-      chartCanvas.width = chartCanvas.clientWidth * dpi;
-      chartCanvas.height = chartCanvas.clientHeight * dpi;
-      ctx.scale(dpi, dpi);
+      const dpi = window.devicePixelRatio;
+      chartCanvas.width = chartCanvas.clientWidth * dpi;
+      chartCanvas.height = chartCanvas.clientHeight * dpi;
+      ctx.scale(dpi, dpi);
 
-      const padding = 35;
-      const chartWidth = chartCanvas.clientWidth - 2 * padding;
-      const chartHeight = chartCanvas.clientHeight - 2 * padding;
+      const padding = 35;
+      const chartWidth = chartCanvas.clientWidth - 2 * padding;
+      const chartHeight = chartCanvas.clientHeight - 2 * padding;
 
-      // Draw Axes
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(padding, padding);
-      ctx.lineTo(padding, chartHeight + padding);
-      ctx.lineTo(chartWidth + padding, chartHeight + padding);
-      ctx.stroke();
+      // Draw Axes
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding, padding);
+      ctx.lineTo(padding, chartHeight + padding);
+      ctx.lineTo(chartWidth + padding, chartHeight + padding);
+      ctx.stroke();
 
-      // Y-axis labels (percentages)
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '10px Inter';
-      ctx.textAlign = 'right';
-      const yLabels = [0, 25, 50, 75, 100];
-      yLabels.forEach(label => {
-        const y = padding + chartHeight * (1 - label / 100);
-        ctx.fillText(`${label}%`, padding - 8, y + 3);
-        ctx.beginPath();
-        ctx.strokeStyle = '#f0f4f8';
-        ctx.moveTo(padding, y);
-        ctx.lineTo(chartWidth + padding, y);
-        ctx.stroke();
-      });
+      // Y-axis labels (percentages)
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px Inter';
+      ctx.textAlign = 'right';
+      const yLabels = [0, 25, 50, 75, 100];
+      yLabels.forEach(label => {
+        const y = padding + chartHeight * (1 - label / 100);
+        ctx.fillText(`${label}%`, padding - 8, y + 3);
+        ctx.beginPath();
+        ctx.strokeStyle = '#f0f4f8';
+        ctx.moveTo(padding, y);
+        ctx.lineTo(chartWidth + padding, y);
+        ctx.stroke();
+      });
 
-      // X-axis labels (time/day/month/year)
-      ctx.textAlign = 'center';
-      const maxLabels = 5;
-      const labelInterval = Math.max(1, Math.floor(labels.length / maxLabels));
+      // X-axis labels (time/day/month/year)
+      ctx.textAlign = 'center';
+      const maxLabels = 5;
+      const labelInterval = Math.max(1, Math.floor(labels.length / maxLabels));
 
-      labels.forEach((label, index) => {
-        if (index % labelInterval === 0 || index === labels.length - 1) {
-          const x = padding + (index / (labels.length - 1)) * chartWidth;
-          ctx.fillText(label, x, chartHeight + padding + 15);
-        }
-      });
+      labels.forEach((label, index) => {
+        if (index % labelInterval === 0 || index === labels.length - 1) {
+          const x = padding + (index / (labels.length - 1)) * chartWidth;
+          ctx.fillText(label, x, chartHeight + padding + 15);
+        }
+      });
 
-      // Draw data line
-      ctx.strokeStyle = '#3498db';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
+      // Draw data line
+      ctx.strokeStyle = '#3498db';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
 
-      data.forEach((point, index) => {
-        const x = padding + (index / (data.length - 1)) * chartWidth;
-        const y = padding + chartHeight * (1 - point.value / 100);
+      data.forEach((point, index) => {
+        const x = padding + (index / (data.length - 1)) * chartWidth;
+        const y = padding + chartHeight * (1 - point.value / 100);
 
-        if (index === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
 
-        // Draw gradient for the area under the line
-        if (index === data.length - 1) {
-          ctx.lineTo(x, chartHeight + padding);
-          ctx.lineTo(padding, chartHeight + padding);
-          ctx.closePath();
+        // Draw gradient for the area under the line
+        if (index === data.length - 1) {
+          ctx.lineTo(x, chartHeight + padding);
+          ctx.lineTo(padding, chartHeight + padding);
+          ctx.closePath();
 
-          const gradient = ctx.createLinearGradient(0, padding, 0, chartHeight + padding);
-          gradient.addColorStop(0, 'rgba(52, 152, 219, 0.3)');
-          gradient.addColorStop(1, 'rgba(52, 152, 219, 0)');
-          ctx.fillStyle = gradient;
-          ctx.fill();
-        }
+          const gradient = ctx.createLinearGradient(0, padding, 0, chartHeight + padding);
+          gradient.addColorStop(0, 'rgba(52, 152, 219, 0.3)');
+          gradient.addColorStop(1, 'rgba(52, 152, 219, 0)');
+          ctx.fillStyle = gradient;
+          ctx.fill();
+        }
 
-        // Draw circles for data points
-        ctx.fillStyle = '#3498db';
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.stroke();
-    }
+        // Draw circles for data points
+        ctx.fillStyle = '#3498db';
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.stroke();
+    }
 
-    // Tab switching logic for statistics
-    const dayTab = document.getElementById('dayTab');
-    const weekTab = document.getElementById('weekTab');
-    const monthTab = document.getElementById('monthTab');
-    const yearTab = document.getElementById('yearTab');
+    // Tab switching logic for statistics
+    const dayTab = document.getElementById('dayTab');
+    const weekTab = document.getElementById('weekTab');
+    const monthTab = document.getElementById('monthTab');
+    const yearTab = document.getElementById('yearTab');
 
-    function activateTab(tabElement, dataType) {
-      // Remove active class from all tabs
-      dayTab.classList.remove('active');
-      weekTab.classList.remove('active');
-      monthTab.classList.remove('active');
-      yearTab.classList.remove('active');
+    function activateTab(tabElement, dataType) {
+      // Remove active class from all tabs
+      dayTab.classList.remove('active');
+      weekTab.classList.remove('active');
+      monthTab.classList.remove('active');
+      yearTab.classList.remove('active');
 
-      // Add active class to the clicked tab
-      tabElement.classList.add('active');
-      currentDataType = dataType;
+      // Add active class to the clicked tab
+      tabElement.classList.add('active');
+      currentDataType = dataType;
 
-      // Generate and draw chart based on data type
-      if (dataType === 'day') {
-        currentChartData = generateDayData();
-      } else if (dataType === 'week') {
-        currentChartData = generateWeekData();
-      } else if (dataType === 'month') {
-        currentChartData = generateMonthData();
-      } else if (dataType === 'year') {
-        currentChartData = generateYearData();
-      }
-      currentLabels = currentChartData.map(d => d.time);
-      drawChart(currentChartData, currentLabels);
-    }
+      // Generate and draw chart based on data type
+      if (dataType === 'day') {
+        currentChartData = generateDayData();
+      } else if (dataType === 'week') {
+        currentChartData = generateWeekData();
+      } else if (dataType === 'month') {
+        currentChartData = generateMonthData();
+      } else if (dataType === 'year') {
+        currentChartData = generateYearData();
+      }
+      currentLabels = currentChartData.map(d => d.time);
+      drawChart(currentChartData, currentLabels);
+    }
 
-    // Event listeners for tabs
-    dayTab.addEventListener('click', () => activateTab(dayTab, 'day'));
-    weekTab.addEventListener('click', () => activateTab(weekTab, 'week'));
-    monthTab.addEventListener('click', () => activateTab(monthTab, 'month'));
-    yearTab.addEventListener('click', () => activateTab(yearTab, 'year'));
+    // Event listeners for tabs
+    dayTab.addEventListener('click', () => activateTab(dayTab, 'day'));
+    weekTab.addEventListener('click', () => activateTab(weekTab, 'week'));
+    monthTab.addEventListener('click', () => activateTab(monthTab, 'month'));
+    yearTab.addEventListener('click', () => activateTab(yearTab, 'year'));
 
-    // Firebase data listener
-    if (!deviceId) {
-      liquidLevelPercentage.textContent = "N/A";
-      liquidDepth.textContent = "N/A";
-      liquidStatus.textContent = "Erreur";
-      sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Erreur`;
-      liquidStatus.classList.add('text-red-600');
-      console.error("Device ID not specified in URL. Please use ?device=YOUR_DEVICE_ID");
-    } else {
-      // Listen to the specific tank level path
-      const tankRef = db.ref(`esp32/${deviceId}/tank`);
-      // You might also want to listen to a separate battery path if ESP32 sends it separately
-      const batteryRef = db.ref(`esp32/${deviceId}/battery`); // Assuming a 'battery' field is sent
+    // Firebase data listener
+    if (!deviceId) {
+      liquidLevelPercentage.textContent = "N/A";
+      liquidDepth.textContent = "N/A";
+      liquidStatus.textContent = "Erreur";
+      sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Erreur`;
+      liquidStatus.classList.add('text-red-600');
+      console.error("Device ID not specified in URL. Please use ?device=YOUR_DEVICE_ID");
+    } else {
+      // Listen to the specific tank level path
+      const tankRef = db.ref(`esp32/${deviceId}/tank`);
+      // You might also want to listen to a separate battery path if ESP32 sends it separately
+      const batteryRef = db.ref(`esp32/${deviceId}/battery`); // Assuming a 'battery' field is sent
 
-      tankRef.on("value", (snapshot) => {
-        const tankLevel = snapshot.val(); // This will be the percentage (e.g., 85)
+      tankRef.on("value", (snapshot) => {
+        const tankLevel = snapshot.val(); // This will be the percentage (e.g., 85)
 
-        if (tankLevel !== null) {
-          const calculatedDepth = (tankLevel / 100) * TOTAL_TANK_DEPTH;
-          // For battery, we'll try to get it from a separate listener or use a dummy if not available
-          // The `updateLiquidLevel` function will handle the display
-          // We'll update battery percentage from its own listener or use a default if not set yet.
-          updateLiquidLevel(tankLevel, calculatedDepth, '', 92); // Status is derived, battery is dummy for now
-        } else {
-          liquidLevelPercentage.textContent = "N/A";
-          liquidDepth.textContent = "N/A";
-          liquidStatus.textContent = "Aucune donnée";
-          liquidFill.style.height = `0%`; // Empty the visual tank
-          console.warn(`No tank data found for device: ${deviceId}`);
-        }
-      }, (error) => {
-        liquidLevelPercentage.textContent = "N/A";
-        liquidDepth.textContent = "N/A";
-        liquidStatus.textContent = "Erreur Connexion";
-        liquidStatus.classList.add('text-red-600');
-        liquidFill.style.height = `0%`; // Empty the visual tank
-        console.error("Firebase tank data error:", error);
-      });
+        if (tankLevel !== null) {
+          const calculatedDepth = (tankLevel / 100) * TOTAL_TANK_DEPTH;
+          // For battery, we'll try to get it from a separate listener or use a dummy if not available
+          // The `updateLiquidLevel` function will handle the display
+          // We'll update battery percentage from its own listener or use a default if not set yet.
+          updateLiquidLevel(tankLevel, calculatedDepth, '', 92); // Status is derived, battery is dummy for now
+        } else {
+          liquidLevelPercentage.textContent = "N/A";
+          liquidDepth.textContent = "N/A";
+          liquidStatus.textContent = "Aucune donnée";
+          liquidFill.style.height = `0%`; // Empty the visual tank
+          console.warn(`No tank data found for device: ${deviceId}`);
+        }
+      }, (error) => {
+        liquidLevelPercentage.textContent = "N/A";
+        liquidDepth.textContent = "N/A";
+        liquidStatus.textContent = "Erreur Connexion";
+        liquidStatus.classList.add('text-red-600');
+        liquidFill.style.height = `0%`; // Empty the visual tank
+        console.error("Firebase tank data error:", error);
+      });
 
-      // Listener for battery data (if ESP32 sends it to a separate path)
-      batteryRef.on("value", (snapshot) => {
-        const batteryPercentage = snapshot.val();
-        if (batteryPercentage !== null) {
-          // Update only the battery part of the UI
-          // We need to re-call updateLiquidLevel with current liquid data to avoid resetting it
-          const currentLiquidPercentage = parseFloat(liquidLevelPercentage.textContent);
-          const currentLiquidDepth = parseFloat(liquidDepth.textContent);
-          const currentLiquidStatus = liquidStatus.textContent; // Get current status text
-          updateLiquidLevel(currentLiquidPercentage, currentLiquidDepth, currentLiquidStatus, batteryPercentage);
-        } else {
-          sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> N/A`;
-          console.warn(`No battery data found for device: ${deviceId}`);
-        }
-      }, (error) => {
-        sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Erreur`;
-        console.error("Firebase battery data error:", error);
-      });
-    }
+      // Listener for battery data (if ESP32 sends it to a separate path)
+      batteryRef.on("value", (snapshot) => {
+        const batteryPercentage = snapshot.val();
+        if (batteryPercentage !== null) {
+          // Update only the battery part of the UI
+          // We need to re-call updateLiquidLevel with current liquid data to avoid resetting it
+          const currentLiquidPercentage = parseFloat(liquidLevelPercentage.textContent);
+          const currentLiquidDepth = parseFloat(liquidDepth.textContent);
+          const currentLiquidStatus = liquidStatus.textContent; // Get current status text
+          updateLiquidLevel(currentLiquidPercentage, currentLiquidDepth, currentLiquidStatus, batteryPercentage);
+        } else {
+          sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> N/A`;
+          console.warn(`No battery data found for device: ${deviceId}`);
+        }
+      }, (error) => {
+        sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Erreur`;
+        console.error("Firebase battery data error:", error);
+      });
+    }
 
-    // Initial chart load (still using dummy data)
-    activateTab(weekTab, 'week'); // Activate week tab by default
+    // Initial chart load (still using dummy data)
+    activateTab(weekTab, 'week'); // Activate week tab by default
 
-    // Redraw chart on window resize
-    window.addEventListener('resize', () => {
-      drawChart(currentChartData, currentLabels);
-    });
-  </script>
+    // Redraw chart on window resize
+    window.addEventListener('resize', () => {
+      drawChart(currentChartData, currentLabels);
+    });
+  </script>
 </body>
 </html>
