@@ -177,20 +177,20 @@
         <div>
           <span class="status-badge">Connecté</span>
           <div class="text-2xl font-bold text-gray-800 mt-2">Ratio de Niveau</div>
-          <div id="liquidLevelPercentage" class="text-5xl font-extrabold text-blue-600 mt-2">85%</div>
+          <div id="liquidLevelPercentage" class="text-5xl font-extrabold text-blue-600 mt-2">--%</div>
           <div class="text-xl font-bold text-gray-800 mt-4">Profondeur du Liquide</div>
-          <div id="liquidDepth" class="text-3xl font-bold text-gray-600 mt-1">1.70 m</div>
+          <div id="liquidDepth" class="text-3xl font-bold text-gray-600 mt-1">-- m</div>
           <div class="text-xl font-bold text-gray-800 mt-4">Statut du Liquide</div>
-          <div id="liquidStatus" class="text-3xl font-bold text-green-600 mt-1">Normal</div>
+          <div id="liquidStatus" class="text-3xl font-bold text-gray-600 mt-1">--</div>
 
           <!-- Sensor Battery Status -->
           <div class="text-xl font-bold text-gray-800 mt-4">Batterie du Capteur</div>
           <div id="sensorBattery" class="text-3xl font-bold text-gray-600 mt-1 flex items-center">
-            <i class="fas fa-battery-full text-green-500 mr-2"></i> 92%
+            <i class="fas fa-battery-empty text-gray-400 mr-2"></i> --%
           </div>
         </div>
         <div class="liquid-level-visual">
-          <div id="liquidFill" class="liquid-fill" style="height: 85%;"></div>
+          <div id="liquidFill" class="liquid-fill" style="height: 0%;"></div>
           <div class="liquid-markers">
             <div class="liquid-marker"></div>
             <div class="liquid-marker"></div>
@@ -222,38 +222,43 @@
     </div>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <script>
-    // Simulate dynamic liquid level update
+    // Firebase configuration
+    const firebaseConfig = {
+      databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.database();
+
+    // Get device ID from URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const deviceId = params.get('device');
+
+    // UI elements
     const liquidFill = document.getElementById('liquidFill');
     const liquidLevelPercentage = document.getElementById('liquidLevelPercentage');
     const liquidDepth = document.getElementById('liquidDepth');
     const liquidStatus = document.getElementById('liquidStatus');
     const sensorBattery = document.getElementById('sensorBattery');
 
+    // Define total tank depth for calculation (adjust as per your tank's actual depth in meters)
+    const TOTAL_TANK_DEPTH = 2.0; // Example: 2.0 meters
+
     function updateLiquidLevel(percentage, depth, status, batteryPercentage) {
       liquidFill.style.height = `${percentage}%`;
       liquidLevelPercentage.textContent = `${percentage}%`;
       liquidDepth.textContent = `${depth.toFixed(2)} m`;
-      sensorBattery.innerHTML = `<i class="fas fa-battery-full text-green-500 mr-2"></i> ${batteryPercentage}%`;
-
-      // Update status color based on level
-      if (percentage < 30) {
-        liquidStatus.classList.remove('text-green-600', 'text-yellow-600');
-        liquidStatus.classList.add('text-red-600');
-        liquidStatus.textContent = 'Faible';
-      } else if (percentage < 60) {
-        liquidStatus.classList.remove('text-green-600', 'text-red-600');
-        liquidStatus.classList.add('text-yellow-600');
-        liquidStatus.textContent = 'Moyen';
-      } else {
-        liquidStatus.classList.remove('text-yellow-600', 'text-red-600');
-        liquidStatus.classList.add('text-green-600');
-        liquidStatus.textContent = 'Normal';
-      }
-
-      // Update battery icon color based on percentage
+      
+      // Update battery status display
       const batteryIcon = sensorBattery.querySelector('i');
       batteryIcon.classList.remove('text-green-500', 'text-yellow-500', 'text-red-500', 'fa-battery-full', 'fa-battery-three-quarters', 'fa-battery-half', 'fa-battery-quarter', 'fa-battery-empty');
+      sensorBattery.lastChild.textContent = ` ${batteryPercentage}%`; // Update text content
+
       if (batteryPercentage > 75) {
         batteryIcon.classList.add('fa-battery-full', 'text-green-500');
       } else if (batteryPercentage > 50) {
@@ -265,9 +270,22 @@
       } else {
         batteryIcon.classList.add('fa-battery-empty', 'text-red-500');
       }
+
+      // Update status color based on level
+      liquidStatus.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600', 'text-gray-600');
+      if (percentage < 30) {
+        liquidStatus.classList.add('text-red-600');
+        liquidStatus.textContent = 'Faible';
+      } else if (percentage < 60) {
+        liquidStatus.classList.add('text-yellow-600');
+        liquidStatus.textContent = 'Moyen';
+      } else {
+        liquidStatus.classList.add('text-green-600');
+        liquidStatus.textContent = 'Normal';
+      }
     }
 
-    // Chart Drawing Logic
+    // Chart Drawing Logic (kept as dummy for now, but ready for real data)
     const chartCanvas = document.getElementById('chartCanvas');
     const ctx = chartCanvas.getContext('2d');
 
@@ -275,10 +293,10 @@
     let currentLabels = [];
     let currentDataType = 'week'; // Default to 'week'
 
-    // Dummy data generation functions
+    // Dummy data generation functions (replace with Firebase historical data fetching)
     function generateDayData() {
       const data = [];
-      for (let i = 0; i <= 23; i += 2) { // Every 2 hours for a day
+      for (let i = 0; i <= 23; i += 2) {
         const value = Math.floor(Math.random() * (95 - 60 + 1)) + 60;
         data.push({ time: `${String(i).padStart(2, '0')}h`, value: value });
       }
@@ -299,9 +317,9 @@
 
     function generateMonthData() {
       const data = [];
-      for (let i = 1; i <= 30; i += 5) { // Every 5 days for a month
+      for (let i = 1; i <= 30; i += 5) {
         const value = Math.floor(Math.random() * (80 - 40 + 1)) + 40;
-        data.push({ time: `${i} J`, value: value }); // 'J' for Jour
+        data.push({ time: `${i} J`, value: value });
       }
       return data;
     }
@@ -440,8 +458,66 @@
     monthTab.addEventListener('click', () => activateTab(monthTab, 'month'));
     yearTab.addEventListener('click', () => activateTab(yearTab, 'year'));
 
-    // Initial load: set liquid level and draw 'week' chart as preferred
-    updateLiquidLevel(85, 1.70, 'Normal', 92); // Initial values for liquid and sensor battery
+    // Firebase data listener
+    if (!deviceId) {
+      liquidLevelPercentage.textContent = "N/A";
+      liquidDepth.textContent = "N/A";
+      liquidStatus.textContent = "Erreur";
+      sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Erreur`;
+      liquidStatus.classList.add('text-red-600');
+      console.error("Device ID not specified in URL. Please use ?device=YOUR_DEVICE_ID");
+    } else {
+      // Listen to the specific tank level path
+      const tankRef = db.ref(`esp32/${deviceId}/tank`);
+      // You might also want to listen to a separate battery path if ESP32 sends it separately
+      const batteryRef = db.ref(`esp32/${deviceId}/battery`); // Assuming a 'battery' field is sent
+
+      tankRef.on("value", (snapshot) => {
+        const tankLevel = snapshot.val(); // This will be the percentage (e.g., 85)
+
+        if (tankLevel !== null) {
+          const calculatedDepth = (tankLevel / 100) * TOTAL_TANK_DEPTH;
+          // For battery, we'll try to get it from a separate listener or use a dummy if not available
+          // The `updateLiquidLevel` function will handle the display
+          // We'll update battery percentage from its own listener or use a default if not set yet.
+          updateLiquidLevel(tankLevel, calculatedDepth, '', 92); // Status is derived, battery is dummy for now
+        } else {
+          liquidLevelPercentage.textContent = "N/A";
+          liquidDepth.textContent = "N/A";
+          liquidStatus.textContent = "Aucune donnée";
+          liquidFill.style.height = `0%`; // Empty the visual tank
+          console.warn(`No tank data found for device: ${deviceId}`);
+        }
+      }, (error) => {
+        liquidLevelPercentage.textContent = "N/A";
+        liquidDepth.textContent = "N/A";
+        liquidStatus.textContent = "Erreur Connexion";
+        liquidStatus.classList.add('text-red-600');
+        liquidFill.style.height = `0%`; // Empty the visual tank
+        console.error("Firebase tank data error:", error);
+      });
+
+      // Listener for battery data (if ESP32 sends it to a separate path)
+      batteryRef.on("value", (snapshot) => {
+        const batteryPercentage = snapshot.val();
+        if (batteryPercentage !== null) {
+          // Update only the battery part of the UI
+          // We need to re-call updateLiquidLevel with current liquid data to avoid resetting it
+          const currentLiquidPercentage = parseFloat(liquidLevelPercentage.textContent);
+          const currentLiquidDepth = parseFloat(liquidDepth.textContent);
+          const currentLiquidStatus = liquidStatus.textContent; // Get current status text
+          updateLiquidLevel(currentLiquidPercentage, currentLiquidDepth, currentLiquidStatus, batteryPercentage);
+        } else {
+          sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> N/A`;
+          console.warn(`No battery data found for device: ${deviceId}`);
+        }
+      }, (error) => {
+        sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Erreur`;
+        console.error("Firebase battery data error:", error);
+      });
+    }
+
+    // Initial chart load (still using dummy data)
     activateTab(weekTab, 'week'); // Activate week tab by default
 
     // Redraw chart on window resize
