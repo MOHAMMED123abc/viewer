@@ -94,41 +94,7 @@
       background-color: rgba(255, 255, 255, 0.5);
       border-radius: 1px;
     }
-    .bottom-nav {
-      background-color: #ffffff;
-      border-top: 1px solid #eef2f6;
-      display: flex;
-      justify-content: center; /* Centered for single item */
-      padding: 1rem 0;
-      position: sticky;
-      bottom: 0;
-      width: 100%;
-      border-bottom-left-radius: 2.5rem;
-      border-bottom-right-radius: 2.5rem;
-      box-shadow: 0 -8px 20px -5px rgba(0, 0, 0, 0.08);
-      z-index: 10;
-    }
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #94a3b8;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: color 0.3s ease-in-out, transform 0.2s ease-in-out;
-      padding: 0.6rem;
-    }
-    .nav-item:hover {
-      transform: translateY(-3px);
-    }
-    .nav-item.active {
-      color: #3498db;
-    }
-    .nav-item i {
-      font-size: 1.5rem;
-      margin-bottom: 0.4rem;
-    }
+
     .tab-button {
       padding: 0.6rem 1.2rem; /* Slightly reduced padding */
       border-radius: 1.25rem;
@@ -161,6 +127,18 @@
     .text-5xl { font-size: 3.5rem; }
     .text-xl { font-size: 1.15rem; }
     .text-3xl { font-size: 1.75rem; }
+
+    /* Custom styles for input fields and buttons within the config card */
+    .config-input {
+      @apply mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-base;
+    }
+    .config-button {
+      @apply w-full py-2.5 px-4 border border-transparent rounded-xl shadow-md text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out;
+    }
+    .config-label {
+      /* Updated to match the style of other metric labels */
+      @apply block text-xl font-bold text-gray-800 mb-1;
+    }
   </style>
 </head>
 <body>
@@ -200,6 +178,25 @@
         </div>
       </div>
 
+      <!-- Tank Configuration Card -->
+      <div class="card">
+        <div class="text-xl font-bold text-gray-800 mb-4">Configuration du Réservoir</div>
+        <div class="space-y-4">
+          <div>
+            <label for="configTotalTankHeight" class="config-label">Hauteur Totale du Réservoir (cm)</label>
+            <input type="number" id="configTotalTankHeight" class="config-input" placeholder="Ex: 150" min="10" max="500">
+          </div>
+          <div>
+            <label for="configSensorOffset" class="config-label">Décalage du Capteur depuis le Haut (cm)</label>
+            <input type="number" id="configSensorOffset" class="config-input" placeholder="Ex: 10" min="0" max="100">
+          </div>
+          <button id="saveTankConfigBtn" class="config-button">
+            Enregistrer la Configuration
+          </button>
+          <div id="configMessage" class="text-center text-sm mt-2"></div>
+        </div>
+      </div>
+
       <!-- Liquid Level Statistics Card -->
       <div class="card">
         <div class="text-xl font-bold text-gray-800 mb-4">Statistiques de Niveau de Liquide</div>
@@ -210,14 +207,6 @@
           <button id="yearTab" class="tab-button ml-2">Année</button>
         </div>
         <canvas id="chartCanvas"></canvas>
-      </div>
-    </div>
-
-    <!-- Bottom Navigation Bar -->
-    <div class="bottom-nav">
-      <div class="nav-item active">
-        <i class="fas fa-home"></i>
-      
       </div>
     </div>
   </div>
@@ -239,49 +228,77 @@
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('device');
 
-    // UI elements
+    // UI elements for display
     const liquidFill = document.getElementById('liquidFill');
     const liquidLevelPercentage = document.getElementById('liquidLevelPercentage');
     const liquidDepth = document.getElementById('liquidDepth');
     const liquidStatus = document.getElementById('liquidStatus');
     const sensorBattery = document.getElementById('sensorBattery');
 
-    // Define total tank depth for calculation (adjust as per your tank's actual depth in meters)
-    const TOTAL_TANK_DEPTH = 2.0; // Example: 2.0 meters
+    // UI elements for configuration
+    const configTotalTankHeightInput = document.getElementById('configTotalTankHeight');
+    const configSensorOffsetInput = document.getElementById('configSensorOffset');
+    const saveTankConfigBtn = document.getElementById('saveTankConfigBtn');
+    const configMessage = document.getElementById('configMessage');
 
-    function updateLiquidLevel(percentage, depth, status, batteryPercentage) {
-      liquidFill.style.height = `${percentage}%`;
-      liquidLevelPercentage.textContent = `${percentage}%`;
-      liquidDepth.textContent = `${depth.toFixed(2)} m`;
-      
-      // Update battery status display
+    // Global variables for data
+    let currentTotalTankHeightCm = 0;
+    let currentSensorOffsetCm = 0;
+    let currentRawDistanceCm = -1;
+    let batteryLevelFromFirebase = 0;
+
+    // Function to update the UI based on current data
+    function updateUI() {
+      // Update battery display
       const batteryIcon = sensorBattery.querySelector('i');
       batteryIcon.classList.remove('text-green-500', 'text-yellow-500', 'text-red-500', 'fa-battery-full', 'fa-battery-three-quarters', 'fa-battery-half', 'fa-battery-quarter', 'fa-battery-empty');
-      sensorBattery.lastChild.textContent = ` ${batteryPercentage}%`; // Update text content
+      sensorBattery.lastChild.textContent = ` ${batteryLevelFromFirebase}%`;
 
-      if (batteryPercentage > 75) {
+      if (batteryLevelFromFirebase > 75) {
         batteryIcon.classList.add('fa-battery-full', 'text-green-500');
-      } else if (batteryPercentage > 50) {
+      } else if (batteryLevelFromFirebase > 50) {
         batteryIcon.classList.add('fa-battery-three-quarters', 'text-green-500');
-      } else if (batteryPercentage > 25) {
+      } else if (batteryLevelFromFirebase > 25) {
         batteryIcon.classList.add('fa-battery-half', 'text-yellow-500');
-      } else if (batteryPercentage > 10) {
+      } else if (batteryLevelFromFirebase > 10) {
         batteryIcon.classList.add('fa-battery-quarter', 'text-red-500');
       } else {
         batteryIcon.classList.add('fa-battery-empty', 'text-red-500');
       }
 
-      // Update status color based on level
-      liquidStatus.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600', 'text-gray-600');
-      if (percentage < 30) {
-        liquidStatus.classList.add('text-red-600');
-        liquidStatus.textContent = 'Faible';
-      } else if (percentage < 60) {
-        liquidStatus.classList.add('text-yellow-600');
-        liquidStatus.textContent = 'Moyen';
+      // Perform tank level calculations only if all data is available and valid
+      if (currentTotalTankHeightCm > 0 && currentRawDistanceCm !== -1) {
+        let liquidDepthCm = currentTotalTankHeightCm - (currentRawDistanceCm - currentSensorOffsetCm);
+        
+        if (liquidDepthCm < 0) liquidDepthCm = 0;
+        if (liquidDepthCm > currentTotalTankHeightCm) liquidDepthCm = currentTotalTankHeightCm;
+
+        const percentage = Math.floor((liquidDepthCm / currentTotalTankHeightCm) * 100);
+        const liquidDepthMeters = liquidDepthCm / 100.0;
+
+        liquidFill.style.height = `${percentage}%`;
+        liquidLevelPercentage.textContent = `${percentage}%`;
+        liquidDepth.textContent = `${liquidDepthMeters.toFixed(2)} m`;
+        
+        // Update liquid status based on percentage
+        liquidStatus.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600', 'text-gray-600');
+        if (percentage < 30) {
+          liquidStatus.classList.add('text-red-600');
+          liquidStatus.textContent = 'Faible';
+        } else if (percentage < 60) {
+          liquidStatus.classList.add('text-yellow-600');
+          liquidStatus.textContent = 'Moyen';
+        } else {
+          liquidStatus.classList.add('text-green-600');
+          liquidStatus.textContent = 'Normal';
+        }
       } else {
-        liquidStatus.classList.add('text-green-600');
-        liquidStatus.textContent = 'Normal';
+        // Display default values if data is not ready yet
+        liquidFill.style.height = `0%`;
+        liquidLevelPercentage.textContent = `--%`;
+        liquidDepth.textContent = `-- m`;
+        liquidStatus.textContent = `--`;
+        liquidStatus.classList.add('text-gray-600');
       }
     }
 
@@ -458,7 +475,7 @@
     monthTab.addEventListener('click', () => activateTab(monthTab, 'month'));
     yearTab.addEventListener('click', () => activateTab(yearTab, 'year'));
 
-    // Firebase data listener
+    // Firebase data listeners
     if (!deviceId) {
       liquidLevelPercentage.textContent = "N/A";
       liquidDepth.textContent = "N/A";
@@ -467,53 +484,77 @@
       liquidStatus.classList.add('text-red-600');
       console.error("Device ID not specified in URL. Please use ?device=YOUR_DEVICE_ID");
     } else {
-      // Listen to the specific tank level path
-      const tankRef = db.ref(`esp32/${deviceId}/tank`);
-      // You might also want to listen to a separate battery path if ESP32 sends it separately
-      const batteryRef = db.ref(`esp32/${deviceId}/battery`); // Assuming a 'battery' field is sent
+      const rawDistanceRef = db.ref(`esp32/${deviceId}/distanceCm`);
+      const batteryRef = db.ref(`esp32/${deviceId}/battery`);
+      const totalTankHeightRef = db.ref(`esp32/${deviceId}/config/totalTankHeight`);
+      const sensorOffsetRef = db.ref(`esp32/${deviceId}/config/sensorOffset`);
 
-      tankRef.on("value", (snapshot) => {
-        const tankLevel = snapshot.val(); // This will be the percentage (e.g., 85)
-
-        if (tankLevel !== null) {
-          const calculatedDepth = (tankLevel / 100) * TOTAL_TANK_DEPTH;
-          // For battery, we'll try to get it from a separate listener or use a dummy if not available
-          // The `updateLiquidLevel` function will handle the display
-          // We'll update battery percentage from its own listener or use a default if not set yet.
-          updateLiquidLevel(tankLevel, calculatedDepth, '', 92); // Status is derived, battery is dummy for now
-        } else {
-          liquidLevelPercentage.textContent = "N/A";
-          liquidDepth.textContent = "N/A";
-          liquidStatus.textContent = "Aucune donnée";
-          liquidFill.style.height = `0%`; // Empty the visual tank
-          console.warn(`No tank data found for device: ${deviceId}`);
+      rawDistanceRef.on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (typeof val === 'number') {
+          currentRawDistanceCm = val;
+          updateUI();
         }
-      }, (error) => {
-        liquidLevelPercentage.textContent = "N/A";
-        liquidDepth.textContent = "N/A";
-        liquidStatus.textContent = "Erreur Connexion";
-        liquidStatus.classList.add('text-red-600');
-        liquidFill.style.height = `0%`; // Empty the visual tank
-        console.error("Firebase tank data error:", error);
       });
 
-      // Listener for battery data (if ESP32 sends it to a separate path)
-      batteryRef.on("value", (snapshot) => {
-        const batteryPercentage = snapshot.val();
-        if (batteryPercentage !== null) {
-          // Update only the battery part of the UI
-          // We need to re-call updateLiquidLevel with current liquid data to avoid resetting it
-          const currentLiquidPercentage = parseFloat(liquidLevelPercentage.textContent);
-          const currentLiquidDepth = parseFloat(liquidDepth.textContent);
-          const currentLiquidStatus = liquidStatus.textContent; // Get current status text
-          updateLiquidLevel(currentLiquidPercentage, currentLiquidDepth, currentLiquidStatus, batteryPercentage);
-        } else {
-          sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> N/A`;
-          console.warn(`No battery data found for device: ${deviceId}`);
+      batteryRef.on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (typeof val === 'number') {
+          batteryLevelFromFirebase = val;
+          updateUI();
         }
-      }, (error) => {
-        sensorBattery.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Erreur`;
-        console.error("Firebase battery data error:", error);
+      });
+
+      totalTankHeightRef.on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (typeof val === 'number') {
+          currentTotalTankHeightCm = val;
+          configTotalTankHeightInput.value = val;
+          updateUI();
+        }
+      });
+
+      sensorOffsetRef.on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (typeof val === 'number') {
+          currentSensorOffsetCm = val;
+          configSensorOffsetInput.value = val;
+          updateUI();
+        }
+      });
+
+      // Event listener for the save button
+      saveTankConfigBtn.addEventListener('click', async () => {
+        const newTotalTankHeight = parseInt(configTotalTankHeightInput.value);
+        const newSensorOffset = parseInt(configSensorOffsetInput.value);
+
+        // Basic validation
+        if (isNaN(newTotalTankHeight) || newTotalTankHeight < 10 || newTotalTankHeight > 500) {
+          configMessage.textContent = 'Veuillez entrer une hauteur de réservoir valide (10-500 cm).';
+          configMessage.className = 'text-center text-sm mt-2 text-red-600';
+          return;
+        }
+        if (isNaN(newSensorOffset) || newSensorOffset < 0 || newSensorOffset > 100) {
+          configMessage.textContent = 'Veuillez entrer un décalage de capteur valide (0-100 cm).';
+          configMessage.className = 'text-center text-sm mt-2 text-red-600';
+          return;
+        }
+
+        configMessage.textContent = 'Enregistrement...';
+        configMessage.className = 'text-center text-sm mt-2 text-blue-600';
+
+        try {
+          await db.ref(`esp32/${deviceId}/config`).update({
+            totalTankHeight: newTotalTankHeight,
+            sensorOffset: newSensorOffset
+          });
+          configMessage.textContent = 'Configuration enregistrée avec succès!';
+          configMessage.className = 'text-center text-sm mt-2 text-green-600';
+        } catch (error) {
+          configMessage.textContent = `Erreur lors de l'enregistrement: ${error.message}`;
+          configMessage.className = 'text-center text-sm mt-2 text-red-600';
+          console.error("Error saving tank configuration:", error);
+        }
       });
     }
 
@@ -524,6 +565,9 @@
     window.addEventListener('resize', () => {
       drawChart(currentChartData, currentLabels);
     });
+
+    // Initial UI update
+    updateUI();
   </script>
 </body>
 </html>
