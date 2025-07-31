@@ -56,7 +56,6 @@
     // Configuration and Initialization
     // يُرجى استبدال هذه المتغيرات بقيم Firebase الخاصة بك
     const firebaseConfig = JSON.parse(__firebase_config);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
     // Initialize Firebase
     const app = firebase.initializeApp(firebaseConfig);
@@ -67,9 +66,9 @@
     const sendBtn = document.getElementById('sendBtn');
     const statusMessage = document.getElementById('statusMessage');
 
-    // Reference to the database path
-    // سيتم إرسال القيمة إلى المسار /manual_input/value
-    const dataRef = db.ref(`artifacts/${appId}/manual_input`);
+    // **التغيير هنا**: سيتم إرسال القيمة إلى المسار /manual_input
+    // هذا المسار يطابق المسار الذي يستمع إليه ESP32
+    const dataRef = db.ref("manual_input");
 
     // Event listener for the send button
     sendBtn.addEventListener('click', async () => {
