@@ -66,9 +66,9 @@
     const sendBtn = document.getElementById('sendBtn');
     const statusMessage = document.getElementById('statusMessage');
 
-    // **التغيير هنا**: سيتم إرسال القيمة إلى المسار /manual_input
-    // هذا المسار يطابق المسار الذي يستمع إليه ESP32
-    const dataRef = db.ref("manual_input");
+    // **التغيير هنا**: سيتم إرسال القيمة إلى المسار /esp32/device123/battery
+    // هذا المسار يطابق المسار الذي تُرسَل إليه البيانات في قاعدة بياناتك
+    const dataRef = db.ref("esp32/device123/battery");
 
     // Event listener for the send button
     sendBtn.addEventListener('click', async () => {
@@ -85,10 +85,7 @@
       statusMessage.className = 'text-sm font-medium mt-4 text-blue-600';
 
       try {
-        await dataRef.set({
-          value: value,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
+        await dataRef.set(value); // إرسال القيمة مباشرةً بدون كائن
         statusMessage.textContent = 'تم الإرسال بنجاح!';
         statusMessage.className = 'text-sm font-medium mt-4 text-green-600';
         inputValue.value = ''; // Clear the input field
