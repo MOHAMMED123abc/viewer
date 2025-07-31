@@ -53,9 +53,19 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
-    // Configuration and Initialization
-    // يُرجى استبدال هذه المتغيرات بقيم Firebase الخاصة بك
-    const firebaseConfig = JSON.parse(__firebase_config);
+    // -----------------------------------------------------------------
+    // التغيير الحاسم: تم وضع إعدادات Firebase الخاصة بك هنا مباشرة
+    // هذا يضمن عمل الكود خارج بيئة العمل هذه
+    // -----------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyAYge0HyYiL0-vlXnnlB_FqAZvocb_lz9Y",
+      authDomain: "esp32-tank-project.firebaseapp.com",
+      databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "esp32-tank-project",
+      storageBucket: "esp32-tank-project.firebasestorage.app",
+      messagingSenderId: "512526180917",
+      appId: "1:512526180917:web:b28201cf73d23bc327c77c"
+    };
 
     // Initialize Firebase
     const app = firebase.initializeApp(firebaseConfig);
@@ -66,8 +76,7 @@
     const sendBtn = document.getElementById('sendBtn');
     const statusMessage = document.getElementById('statusMessage');
 
-    // **التغيير هنا**: سيتم إرسال القيمة إلى المسار /esp32/device123/battery
-    // هذا المسار يطابق المسار الذي تُرسَل إليه البيانات في قاعدة بياناتك
+    // مسار قاعدة البيانات الذي تم الاتفاق عليه
     const dataRef = db.ref("esp32/device123/battery");
 
     // Event listener for the send button
@@ -85,7 +94,7 @@
       statusMessage.className = 'text-sm font-medium mt-4 text-blue-600';
 
       try {
-        await dataRef.set(value); // إرسال القيمة مباشرةً بدون كائن
+        await dataRef.set(value);
         statusMessage.textContent = 'تم الإرسال بنجاح!';
         statusMessage.className = 'text-sm font-medium mt-4 text-green-600';
         inputValue.value = ''; // Clear the input field
