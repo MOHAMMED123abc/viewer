@@ -3,35 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moniteur de Niveau de Liquide</title>
+  <title>Moniteur de Réservoir</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    #app-container { background-color: #ffffff; width: 100%; max-width: 420px; min-height: 95vh; border-radius: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2); display: flex; flex-direction: column; overflow: hidden; }
-    .app-title { padding: 1.5rem; text-align: center; font-weight: 700; font-size: 1.6rem; color: #2c3e50; }
-    .card { background-color: #ffffff; border-radius: 1.75rem; box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.1); padding: 2rem; margin: 1.5rem; }
+    #app-container { background-color: #ffffff; width: 100%; max-width: 420px; min-height: 95vh; border-radius: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
+    .card { background-color: #ffffff; border-radius: 1.75rem; box-shadow: 0 15px 30px -8px rgba(0,0,0,0.1); padding: 2rem; margin: 1.5rem; }
     .liquid-level-visual { width: 100px; height: 250px; border: 4px solid #cbd5e1; border-radius: 1.5rem; overflow: hidden; position: relative; background-color: #eef2f6; display: flex; flex-direction: column-reverse; }
     .liquid-fill { width: 100%; background: linear-gradient(to top, #3498db, #5dade2); transition: height 0.8s ease-in-out; }
   </style>
 </head>
 <body>
   <div id="app-container">
-    <div class="app-title">Moniteur de Réservoir</div>
-    <div class="flex-grow overflow-y-auto">
-      <div class="card flex items-center justify-between">
-        <div>
-          <div class="text-xl font-bold text-gray-800">Niveau</div>
-          <div id="liquidLevelPercentage" class="text-5xl font-extrabold text-blue-600 mt-2">--%</div>
-          <div class="text-lg font-bold text-gray-800 mt-4">Distance</div>
-          <div id="liquidDepth" class="text-2xl font-bold text-gray-600">-- cm</div>
-          <div class="text-lg font-bold text-gray-800 mt-4">Batterie</div>
-          <div id="sensorBattery" class="text-2xl font-bold text-gray-600"><i class="fas fa-battery-half"></i> --%</div>
-        </div>
-        <div class="liquid-level-visual">
-          <div id="liquidFill" class="liquid-fill" style="height: 0%;"></div>
-        </div>
+    <div class="p-6 text-center text-2xl font-bold text-gray-800">Moniteur de Réservoir</div>
+    <div class="card flex items-center justify-between">
+      <div>
+        <div class="text-xl font-bold text-gray-800">Niveau</div>
+        <div id="perc" class="text-5xl font-extrabold text-blue-600 mt-2">--%</div>
+        <div class="text-lg font-bold text-gray-800 mt-4">Distance</div>
+        <div id="dist" class="text-2xl font-bold text-gray-600">-- cm</div>
+        <div class="text-lg font-bold text-gray-800 mt-4">Batterie</div>
+        <div id="batt" class="text-2xl font-bold text-gray-600">--%</div>
+      </div>
+      <div class="liquid-level-visual">
+        <div id="fill" class="liquid-fill" style="height: 0%;"></div>
       </div>
     </div>
   </div>
@@ -49,33 +45,26 @@
       messagingSenderId: "512526180917",
       appId: "1:512526180917:web:b28201cf73d23bc327c77c"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const params = new URLSearchParams(window.location.search);
     const deviceId = params.get('device') || 'device123';
 
-    // إعدادات طول الخزان (يمكنك تغييرها)
-    const TANK_MAX_HEIGHT = 200; // الخزان فارغ عند 200 سم
-
-    // الاستماع للبيانات من المسارات الصحيحة
-    db.ref(`esp32/${deviceId}/distanceCm`).on("value", (snapshot) => {
-      const distance = snapshot.val();
-      if (distance !== null) {
-        let percentage = ((TANK_MAX_HEIGHT - distance) / TANK_MAX_HEIGHT) * 100;
-        percentage = Math.max(0, Math.min(100, percentage));
-        
-        document.getElementById('liquidLevelPercentage').textContent = Math.round(percentage) + "%";
-        document.getElementById('liquidDepth').textContent = distance + " cm";
-        document.getElementById('liquidFill').style.height = percentage + "%";
+    // مراقبة البيانات
+    db.ref(`esp32/${deviceId}/distanceCm`).on("value", (s) => {
+      const d = s.val();
+      if (d !== null) {
+        let p = ((200 - d) / 200) * 100; // افترضنا طول الخزان 200سم
+        p = Math.max(0, Math.min(100, p));
+        document.getElementById('perc').textContent = Math.round(p) + "%";
+        document.getElementById('dist').textContent = d + " cm";
+        document.getElementById('fill').style.height = p + "%";
       }
     });
 
-    db.ref(`esp32/${deviceId}/battery`).on("value", (snapshot) => {
-      const batt = snapshot.val();
-      if (batt !== null) {
-        document.getElementById('sensorBattery').innerHTML = `<i class="fas fa-battery-full text-green-500"></i> ${batt}%`;
-      }
+    db.ref(`esp32/${deviceId}/battery`).on("value", (s) => {
+      const b = s.val();
+      if (b !== null) document.getElementById('batt').textContent = b + "%";
     });
   </script>
 </body>
