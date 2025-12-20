@@ -3,40 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moniteur de Réservoir</title>
+  <title>Smart Tank Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    #app-container { background-color: #ffffff; width: 100%; max-width: 420px; min-height: 90vh; border-radius: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
-    .card { background-color: #ffffff; border-radius: 1.75rem; box-shadow: 0 15px 30px -8px rgba(0,0,0,0.1); padding: 2rem; margin: 1.5rem; }
-    .liquid-level-visual { width: 100px; height: 250px; border: 4px solid #cbd5e1; border-radius: 1.5rem; overflow: hidden; position: relative; background-color: #eef2f6; display: flex; flex-direction: column-reverse; }
-    .liquid-fill { width: 100%; background: linear-gradient(to top, #3498db, #5dade2); transition: height 0.8s ease-in-out; }
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
+    body { background: #0f172a; color: #f8fafc; font-family: 'Rajdhani', sans-serif; }
+    .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 2rem; }
+    .tank-bg { width: 120px; height: 280px; background: #334155; border: 4px solid #475569; border-radius: 2rem; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+    .water { width: 100%; position: absolute; bottom: 0; background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 20px rgba(56, 189, 248, 0.5); }
+    .wave { position: absolute; top: -10px; left: 0; width: 200%; height: 20px; background: rgba(56, 189, 248, 0.3); border-radius: 40%; animation: moveWave 3s infinite linear; }
+    @keyframes moveWave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .value-font { font-family: 'Orbitron', sans-serif; }
   </style>
 </head>
-<body>
-  <div id="app-container">
-    <div class="p-6 text-center text-2xl font-bold text-gray-800">Moniteur de Réservoir</div>
-    <div class="card flex items-center justify-between">
-      <div>
-        <div class="text-xl font-bold text-gray-800">Niveau (Tank)</div>
-        <div id="tankValue" class="text-6xl font-extrabold text-blue-600 mt-2">--</div>
-        <div class="text-sm font-medium text-gray-400 mt-1">Valeur reçue de Firebase</div>
-        
-        <div class="text-lg font-bold text-gray-800 mt-8">Statut</div>
-        <div id="statusText" class="text-xl font-bold text-green-600">Connecté</div>
+<body class="p-4 md:p-8 flex justify-center items-center min-h-screen">
+
+  <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-3 gap-6">
+    
+    <div class="md:col-span-2 glass-card p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+      <div class="flex-1 text-center md:text-left">
+        <h1 class="text-3xl font-bold text-sky-400 mb-2 uppercase tracking-widest">Niveau du Réservoir</h1>
+        <div class="flex items-baseline justify-center md:justify-start gap-2">
+          <span id="tankValue" class="text-8xl font-black text-white value-font">--</span>
+          <span class="text-3xl font-bold text-sky-500">%</span>
+        </div>
+        <div class="mt-6 space-y-4">
+          <div class="flex items-center gap-3 text-gray-400">
+            <i class="fas fa-battery-three-quarters text-green-400 text-xl"></i>
+            <span class="text-lg">Batterie: <b id="battValue" class="text-white">--%</b></span>
+          </div>
+          <div class="flex items-center gap-3 text-gray-400">
+            <i class="fas fa-signal text-blue-400"></i>
+            <span>Statut: <span id="status" class="text-green-400 font-bold">EN LIGNE</span></span>
+          </div>
+        </div>
       </div>
-      <div class="liquid-level-visual">
-        <div id="fill" class="liquid-fill" style="height: 0%;"></div>
+
+      <div class="tank-bg">
+        <div id="waterLevel" class="water" style="height: 0%;">
+          <div class="wave"></div>
+        </div>
       </div>
     </div>
+
+    <div class="glass-card p-6 flex flex-col justify-between border-t-4 border-sky-500">
+      <div>
+        <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+          <i class="fas fa-cogs text-sky-400"></i> CONFIGURATION
+        </h2>
+        <div class="space-y-6">
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+            <p class="text-gray-400 text-sm mb-1">Hauteur Totale</p>
+            <p class="text-2xl font-bold value-font"><span id="totalH">--</span> <small class="text-sm text-sky-400">cm</small></p>
+          </div>
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+            <p class="text-gray-400 text-sm mb-1">Offset (Vider)</p>
+            <p class="text-2xl font-bold value-font"><span id="offsetV">--</span> <small class="text-sm text-sky-400">cm</small></p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-8 pt-4 border-t border-slate-700 text-center">
+        <p class="text-xs text-slate-500 uppercase tracking-tighter">ID Appareil: <span id="devID" class="text-slate-300">---</span></p>
+      </div>
+    </div>
+
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
-    // إعدادات Firebase الخاصة بك
     const firebaseConfig = {
       apiKey: "AIzaSyAYge0HyYiL0-vlXnnlB_FqAZvocb_lz9Y",
       databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
@@ -45,29 +83,41 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // جلب معرف الجهاز من الرابط (device123)
-    const params = new URLSearchParams(window.location.search);
-    const deviceId = params.get('device') || 'device123';
+    // استخراج ID الجهاز من الرابط
+    const urlParams = new URLSearchParams(window.location.search);
+    const deviceId = urlParams.get('device') || 'device123';
+    document.getElementById('devID').textContent = deviceId;
 
-    // التعديل الرئيسي: الاستماع لمسار tank كما هو في كود الـ ESP32
-    const tankRef = db.ref(`esp32/${deviceId}/tank`);
+    // المراقبة - تم تغيير المسار ليطابق Firebase تماماً
+    const deviceRef = db.ref(`${deviceId}`);
 
-    tankRef.on("value", (snapshot) => {
-      const val = snapshot.val();
-      if (val !== null) {
-        // تحديث الرقم في الصفحة
-        document.getElementById('tankValue').textContent = val;
+    deviceRef.on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // تحديث النسبة المئوية
+        const tank = data.tank || 0;
+        document.getElementById('tankValue').innerText = tank;
+        document.getElementById('waterLevel').style.height = tank + "%";
         
-        // تحديث شكل الخزان (نفترض أن القيمة بين 0 و 100)
-        let fillLevel = Math.max(0, Math.min(100, val));
-        document.getElementById('fill').style.height = fillLevel + "%";
+        // تحديث البطارية
+        document.getElementById('battValue').innerText = (data.battery || 0) + "%";
         
-        console.log("Valeur Tank reçue:", val);
-      } else {
-        document.getElementById('tankValue').textContent = "N/A";
+        // تحديث إعدادات الـ Config
+        if(data.config) {
+          document.getElementById('totalH').innerText = data.config.totalHeight || "--";
+          document.getElementById('offsetV').innerText = data.config.sensorOffset || "--";
+        }
+
+        // تغيير لون الماء بناء على المستوى
+        const waterColor = document.getElementById('waterLevel');
+        if(tank < 20) waterColor.style.filter = "hue-rotate(300deg)"; // أحمر للتحذير
+        else waterColor.style.filter = "hue-rotate(0deg)";
+
       }
     }, (error) => {
-      console.error("Erreur Firebase:", error);
+      console.error("Firebase Error:", error);
+      document.getElementById('status').innerText = "ERREUR";
+      document.getElementById('status').className = "text-red-500 font-bold";
     });
   </script>
 </body>
