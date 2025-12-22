@@ -39,9 +39,9 @@
           </div>
           
           <div class="flex items-center gap-3 text-gray-400">
-    <i class="fas fa-ruler-vertical text-sky-400"></i>
-    <span class="text-lg">Distance: <b id="rawDist" class="text-white">--</b> <small class="text-sky-400">cm</small></span>
-  </div>
+  <i class="fas fa-water text-sky-400"></i>
+  <span class="text-lg">Niveau d'eau: <b id="waterHeight" class="text-white">--</b> <small class="text-sky-400">cm</small></span>
+</div>
 
   <div class="flex items-center gap-3 text-gray-400">
     <i class="fas fa-clock text-blue-400"></i>
@@ -116,10 +116,10 @@
 
 // --- الإضافات الجديدة ---
 
-        // 1. تحديث المسافة الفعلية
-        if (data.raw_cm !== undefined) {
-          document.getElementById('rawDist').innerText = data.raw_cm.toFixed(1);
-        }
+        // تحديث ارتفاع الماء الحقيقي
+if (data.water_height !== undefined) {
+    document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
+}
 
         // 2. تحديث وتحويل الوقت (توقيت الجزائر)
         if (data.last_seen) {
@@ -167,5 +167,6 @@ if(tank < 10) {
   </script>
 </body>
 </html>
+
 
 
