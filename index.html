@@ -33,10 +33,18 @@
             <i class="fas fa-battery-three-quarters text-green-400 text-xl"></i>
             <span class="text-lg">Batterie: <b id="battValue" class="text-white">--%</b></span>
           </div>
+          
           <div class="flex items-center gap-3 text-gray-400">
-            <i class="fas fa-signal text-blue-400"></i>
-            <span>Statut: <span id="status" class="text-green-400 font-bold">EN LIGNE</span></span>
-          </div>
+    <i class="fas fa-ruler-vertical text-sky-400"></i>
+    <span class="text-lg">Distance: <b id="rawDist" class="text-white">--</b> <small class="text-sky-400">cm</small></span>
+  </div>
+
+  <div class="flex items-center gap-3 text-gray-400">
+    <i class="fas fa-clock text-blue-400"></i>
+    <span class="text-lg">Dernière mise à jour: <br><b id="lastSeen" class="text-sky-300 text-sm">--:--</b></span>
+  </div>
+
+          
         </div>
       </div>
 
@@ -101,6 +109,29 @@
         
         // تحديث البطارية
         document.getElementById('battValue').innerText = (data.battery || 0) + "%";
+
+// --- الإضافات الجديدة ---
+
+        // 1. تحديث المسافة الفعلية
+        if (data.raw_cm !== undefined) {
+          document.getElementById('rawDist').innerText = data.raw_cm.toFixed(1);
+        }
+
+        // 2. تحديث وتحويل الوقت (توقيت الجزائر)
+        if (data.last_seen) {
+          const date = new Date(data.last_seen);
+          // تنسيق الوقت ليناسب الجزائر (UTC+1) بشكل تلقائي حسب لغة المتصفح
+          const options = { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit',
+            day: '2-digit', 
+            month: '2-digit',
+            year: 'numeric'
+          };
+          document.getElementById('lastSeen').innerText = date.toLocaleString('fr-FR', options);
+        }
+
         
         // تحديث إعدادات الـ Config
         if(data.config) {
@@ -113,12 +144,23 @@
         if(tank < 20) waterColor.style.filter = "hue-rotate(300deg)"; // أحمر للتحذير
         else waterColor.style.filter = "hue-rotate(0deg)";
 
+// نظام تنبيه بصري
+if(tank < 10) {
+    document.getElementById('tankValue').classList.add('animate-pulse', 'text-red-500');
+    document.getElementById('tankValue').classList.remove('text-white');
+} else {
+    document.getElementById('tankValue').classList.remove('animate-pulse', 'text-red-500');
+    document.getElementById('tankValue').classList.add('text-white');
+}
+
+              
       }
     }, (error) => {
       console.error("Firebase Error:", error);
-      document.getElementById('status').innerText = "ERREUR";
+      
       document.getElementById('status').className = "text-red-500 font-bold";
     });
   </script>
 </body>
 </html>
+
