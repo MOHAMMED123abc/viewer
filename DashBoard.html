@@ -82,90 +82,72 @@
 
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script> <script>
- <script>
-  const firebaseConfig = {
-      apiKey: "AIzaSyAYge0HyYiL0-vlXnnlB_FqAZvocb_lz9Y",
-      databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-  
-// 3. تفعيل الدخول المجهول فوراً لفتح الصلاحيات للقراءة
-    firebase.auth().signInAnonymously().catch((error) => {
-        console.error("خطأ في تسجيل الدخول:", error.message);
-    });
-  
-    // 1. استخراج ID الجهاز من الرابط
-    const urlParams = new URLSearchParams(window.location.search);
-    const deviceId = urlParams.get('device') || 'device0002'; // الافتراضي هو الزبون القديم
-    document.getElementById('devID').textContent = deviceId;
-
-    // 2. تحديد المسار الصحيح ذكياً
-    // إذا كان الـ ID عبارة عن أرقام فقط (مثل الـ Chip ID الجديد)، ابحث عنه داخل مجلد devices
-    // أما إذا كان يبدأ بكلمة device (مثل الزبون القديم)، ابحث عنه في المسار الرئيسي
-    let finalPath = deviceId;
-    if (!deviceId.startsWith('device')) {
-        finalPath = "devices/" + deviceId;
-    }
-
-    console.log("Reading from path: " + finalPath); // للتأكد في المتصفح
-    const deviceRef = db.ref(finalPath);
-
-    deviceRef.on("value", (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // تحديث النسبة المئوية
-        const tank = data.tank || 0;
-        document.getElementById('tankValue').innerText = tank;
-        document.getElementById('waterLevel').style.height = tank + "%";
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYge0HyYiL0-vlXnnlB_FqAZvocb_lz9Y",
+            databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
+        };
         
-        // تحديث ارتفاع الماء الحقيقي
-        if (data.water_height !== undefined) {
-            document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // تفعيل الدخول المجهول
+        firebase.auth().signInAnonymously().catch((error) => {
+            console.error("Auth Error:", error.message);
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const deviceId = urlParams.get('device') || 'device0002'; 
+        document.getElementById('devID').textContent = deviceId;
+
+        let finalPath = deviceId;
+        if (!deviceId.startsWith('device')) {
+            finalPath = "devices/" + deviceId;
         }
 
-        // تحديث الوقت (توقيت الجزائر)
-        if (data.last_seen) {
-          const date = new Date(data.last_seen);
-          const options = { 
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            day: '2-digit', month: '2-digit', year: 'numeric'
-          };
-          document.getElementById('lastSeen').innerText = date.toLocaleString('fr-FR', options);
-        }
+        const deviceRef = db.ref(finalPath);
+        deviceRef.on("value", (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const tank = data.tank || 0;
+                document.getElementById('tankValue').innerText = tank;
+                document.getElementById('waterLevel').style.height = tank + "%";
+                
+                if (data.water_height !== undefined) {
+                    document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
+                }
 
-        // تحديث إعدادات الـ Config
-        if(data.config) {
-          document.getElementById('totalH').innerText = data.config.totalHeight || "--";
-          document.getElementById('offsetV').innerText = data.config.sensorOffset || "--";
-        }
+                if (data.last_seen) {
+                    const date = new Date(data.last_seen);
+                    const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
+                    document.getElementById('lastSeen').innerText = date.toLocaleString('fr-FR', options);
+                }
 
-        // تغيير لون الماء بناء على المستوى
-        const waterColor = document.getElementById('waterLevel');
-        if(tank < 20) waterColor.style.filter = "hue-rotate(300deg)"; 
-        else waterColor.style.filter = "hue-rotate(0deg)";
+                if(data.config) {
+                    document.getElementById('totalH').innerText = data.config.totalHeight || "--";
+                    document.getElementById('offsetV').innerText = data.config.sensorOffset || "--";
+                }
 
-        // نظام تنبيه بصري
-        if(tank < 10) {
-            document.getElementById('tankValue').classList.add('animate-pulse', 'text-red-500');
-            document.getElementById('tankValue').classList.remove('text-white');
-        } else {
-            document.getElementById('tankValue').classList.remove('animate-pulse', 'text-red-500');
-            document.getElementById('tankValue').classList.add('text-white');
-        }
-      }
-    }, (error) => {
-      console.error("Firebase Error:", error);
+                const waterColor = document.getElementById('waterLevel');
+                waterColor.style.filter = (tank < 20) ? "hue-rotate(300deg)" : "hue-rotate(0deg)";
+
+                const valEl = document.getElementById('tankValue');
+                if(tank < 10) {
+                    valEl.classList.add('animate-pulse', 'text-red-500');
+                    valEl.classList.remove('text-white');
+                } else {
+                    valEl.classList.remove('animate-pulse', 'text-red-500');
+                    valEl.classList.add('text-white');
+                }
+            }
+        }, (error) => {
+            console.error("Firebase Error:", error);
       
-      document.getElementById('status').className = "text-red-500 font-bold";
+   //   document.getElementById('status').className = "text-red-500 font-bold";
     });
   </script>
 </body>
