@@ -85,7 +85,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <script>
+<script>
     const firebaseConfig = {
       apiKey: "AIzaSyAYge0HyYiL0-vlXnnlB_FqAZvocb_lz9Y",
       databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
@@ -94,13 +94,21 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // استخراج ID الجهاز من الرابط
+    // 1. استخراج ID الجهاز من الرابط
     const urlParams = new URLSearchParams(window.location.search);
-    const deviceId = urlParams.get('device') || 'device0002';
+    const deviceId = urlParams.get('device') || 'device0002'; // الافتراضي هو الزبون القديم
     document.getElementById('devID').textContent = deviceId;
 
-    // المراقبة - تم تغيير المسار ليطابق Firebase تماماً
-    const deviceRef = db.ref(`${deviceId}`);
+    // 2. تحديد المسار الصحيح ذكياً
+    // إذا كان الـ ID عبارة عن أرقام فقط (مثل الـ Chip ID الجديد)، ابحث عنه داخل مجلد devices
+    // أما إذا كان يبدأ بكلمة device (مثل الزبون القديم)، ابحث عنه في المسار الرئيسي
+    let finalPath = deviceId;
+    if (!deviceId.startsWith('device')) {
+        finalPath = "devices/" + deviceId;
+    }
+
+    console.log("Reading from path: " + finalPath); // للتأكد في المتصفح
+    const deviceRef = db.ref(finalPath);
 
     deviceRef.on("value", (snapshot) => {
       const data = snapshot.val();
@@ -110,32 +118,21 @@
         document.getElementById('tankValue').innerText = tank;
         document.getElementById('waterLevel').style.height = tank + "%";
         
-        // تحديث البطارية
-    //    document.getElementById('battValue').innerText = (data.battery || 0) + "%";
-
-// --- الإضافات الجديدة ---
-
         // تحديث ارتفاع الماء الحقيقي
-if (data.water_height !== undefined) {
-    document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
-}
+        if (data.water_height !== undefined) {
+            document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
+        }
 
-        // 2. تحديث وتحويل الوقت (توقيت الجزائر)
+        // تحديث الوقت (توقيت الجزائر)
         if (data.last_seen) {
           const date = new Date(data.last_seen);
-          // تنسيق الوقت ليناسب الجزائر (UTC+1) بشكل تلقائي حسب لغة المتصفح
           const options = { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit',
-            day: '2-digit', 
-            month: '2-digit',
-            year: 'numeric'
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            day: '2-digit', month: '2-digit', year: 'numeric'
           };
           document.getElementById('lastSeen').innerText = date.toLocaleString('fr-FR', options);
         }
 
-        
         // تحديث إعدادات الـ Config
         if(data.config) {
           document.getElementById('totalH').innerText = data.config.totalHeight || "--";
@@ -144,19 +141,17 @@ if (data.water_height !== undefined) {
 
         // تغيير لون الماء بناء على المستوى
         const waterColor = document.getElementById('waterLevel');
-        if(tank < 20) waterColor.style.filter = "hue-rotate(300deg)"; // أحمر للتحذير
+        if(tank < 20) waterColor.style.filter = "hue-rotate(300deg)"; 
         else waterColor.style.filter = "hue-rotate(0deg)";
 
-// نظام تنبيه بصري
-if(tank < 10) {
-    document.getElementById('tankValue').classList.add('animate-pulse', 'text-red-500');
-    document.getElementById('tankValue').classList.remove('text-white');
-} else {
-    document.getElementById('tankValue').classList.remove('animate-pulse', 'text-red-500');
-    document.getElementById('tankValue').classList.add('text-white');
-}
-
-              
+        // نظام تنبيه بصري
+        if(tank < 10) {
+            document.getElementById('tankValue').classList.add('animate-pulse', 'text-red-500');
+            document.getElementById('tankValue').classList.remove('text-white');
+        } else {
+            document.getElementById('tankValue').classList.remove('animate-pulse', 'text-red-500');
+            document.getElementById('tankValue').classList.add('text-white');
+        }
       }
     }, (error) => {
       console.error("Firebase Error:", error);
