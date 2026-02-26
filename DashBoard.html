@@ -21,6 +21,62 @@
     .water { width: 100%; position: absolute; bottom: 0; background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 20px rgba(56, 189, 248, 0.5); }
     .wave { position: absolute; top: -10px; left: 0; width: 200%; height: 20px; background: rgba(56, 189, 248, 0.3); border-radius: 40%; animation: moveWave 3s infinite linear; }
     @keyframes moveWave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+}
+    .update-container {
+        margin-top: 25px;
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .btn-update-huge {
+        background: rgba(56, 189, 248, 0.05);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        color: #38bdf8;
+        padding: 15px 30px;
+        border-radius: 1.2rem;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: inset 0 0 15px rgba(56, 189, 248, 0.05);
+    }
+
+    /* تأثير عند تمرير الماوس */
+    .btn-update-huge:hover {
+        background: rgba(56, 189, 248, 0.15);
+        border-color: #38bdf8;
+        color: #fff;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        transform: scale(1.02);
+    }
+
+    /* حركة السهم المدور */
+    .spinning {
+        animation: spin 1s infinite linear;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+
+
+    
+.update-btn {
+    animation: pulse-border 2s infinite;
+}
     .value-font { font-family: 'Orbitron', sans-serif; }
     .refresh-icon-btn {
         background: none;
@@ -48,6 +104,37 @@
     @keyframes spin {
         100% { transform: rotate(360deg); }
     }
+
+
+    /* تصميم الزر الجديد */
+    .update-btn {
+        background: rgba(56, 189, 248, 0.1);
+        border: 2px solid #38bdf8;
+        color: #38bdf8;
+        padding: 12px 24px;
+        border-radius: 1rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    .update-btn:hover {
+        background: #38bdf8;
+        color: #0f172a;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .update-btn:active {
+        transform: translateY(0);
+    }
   </style>
 </head>
 <body class="p-4 md:p-8 flex justify-center items-center min-h-screen">
@@ -68,15 +155,19 @@
   <span class="text-lg">Niveau d'eau: <b id="waterHeight" class="text-white">--</b> <small class="text-sky-400">cm</small></span>
 </div>
 
-<div class="flex items-center gap-3 text-gray-400">
-    <i class="fas fa-clock text-blue-400"></i>
-    <span class="text-lg">
-        Dernière mise à jour: <br>
-        <b id="lastSeen" class="text-sky-300 text-sm">--:--</b>
-        <button onclick="updateData()" class="refresh-icon-btn" id="refreshBtn">
-            <i class="fas fa-sync-alt"></i>
-        </button>
-    </span>
+<div class="space-y-4">
+    <div class="flex items-center gap-3 text-gray-400">
+        <i class="fas fa-clock text-blue-400"></i>
+        <span class="text-lg">
+            Dernière mise à jour: <br>
+            <b id="lastSeen" class="text-sky-300 text-sm">--:--</b>
+        </span>
+    </div>
+
+    <button onclick="updateData()" class="update-btn" id="refreshBtn">
+        <i class="fas fa-sync-alt" id="refreshIcon"></i>
+        <span>Appuyez pour mise à jour</span>
+    </button>
 </div>
 
           
@@ -145,16 +236,27 @@
 
 const deviceRef = db.ref(finalPath);
 
-// دالة لجلب البيانات مرة واحدة فقط
 function updateData() {
-    // استخدمنا .once('value') بدلاً من .on('value')
+    const icon = document.getElementById('refreshIcon');
+    icon.classList.add('spinning'); // إضافة حركة الدوران
+
     deviceRef.once("value").then((snapshot) => {
         const data = snapshot.val();
         if (data) {
+            // ... (نفس الكود القديم الخاص بتحديث البيانات) ...
             const tank = data.tank || 0;
             document.getElementById('tankValue').innerText = tank;
             document.getElementById('waterLevel').style.height = tank + "%";
-            
+
+  if (tank < 15) {
+    valEl.classList.add('animate-pulse', 'text-red-500');
+    valEl.classList.remove('text-white');
+    waterColor.style.filter = "hue-rotate(300deg)"; // يتحول للون الأحمر/الأرجواني للتنبيه
+} else {
+    valEl.classList.remove('animate-pulse', 'text-red-500');
+    valEl.classList.add('text-white');
+    waterColor.style.filter = "hue-rotate(0deg)";
+}
             if (data.water_height !== undefined) {
                 document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
             }
@@ -169,28 +271,18 @@ function updateData() {
                 document.getElementById('totalH').innerText = data.config.totalHeight || "--";
                 document.getElementById('offsetV').innerText = data.config.sensorOffset || "--";
             }
-
-            // تحديث الألوان والتنسيقات
-            const waterColor = document.getElementById('waterLevel');
-            waterColor.style.filter = (tank < 20) ? "hue-rotate(300deg)" : "hue-rotate(0deg)";
-
-            const valEl = document.getElementById('tankValue');
-            if(tank < 10) {
-                valEl.classList.add('animate-pulse', 'text-red-500');
-                valEl.classList.remove('text-white');
-            } else {
-                valEl.classList.remove('animate-pulse', 'text-red-500');
-                valEl.classList.add('text-white');
-            }
         }
         
-        // بعد جلب البيانات، نقوم بقطع الاتصال فوراً لتوفير الـ Concurrent Connections
-        // ملاحظة: فيربيز يغلق الاتصال تلقائياً بعد فترة قصيرة عند استخدام once
+        // إيقاف الدوران بعد ثانية واحدة
+        setTimeout(() => {
+            icon.classList.remove('spinning');
+        }, 1000);
+
     }).catch((error) => {
         console.error("Firebase Error:", error);
+        icon.classList.remove('spinning');
     });
 }
-
 // استدعاء الدالة عند تحميل الصفحة لأول مرة
 updateData();
 
