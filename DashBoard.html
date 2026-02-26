@@ -22,6 +22,32 @@
     .wave { position: absolute; top: -10px; left: 0; width: 200%; height: 20px; background: rgba(56, 189, 248, 0.3); border-radius: 40%; animation: moveWave 3s infinite linear; }
     @keyframes moveWave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     .value-font { font-family: 'Orbitron', sans-serif; }
+    .refresh-icon-btn {
+        background: none;
+        border: none;
+        color: #38bdf8; /* لون السماء الأزرق في تصميمك */
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 10px;
+        vertical-align: middle;
+    }
+
+    .refresh-icon-btn:hover {
+        color: #fff;
+        text-shadow: 0 0 10px #38bdf8;
+        transform: rotate(45deg);
+    }
+
+    .spinning {
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="p-4 md:p-8 flex justify-center items-center min-h-screen">
@@ -42,10 +68,16 @@
   <span class="text-lg">Niveau d'eau: <b id="waterHeight" class="text-white">--</b> <small class="text-sky-400">cm</small></span>
 </div>
 
-  <div class="flex items-center gap-3 text-gray-400">
+<div class="flex items-center gap-3 text-gray-400">
     <i class="fas fa-clock text-blue-400"></i>
-    <span class="text-lg">Dernière mise à jour: <br><b id="lastSeen" class="text-sky-300 text-sm">--:--</b></span>
-  </div>
+    <span class="text-lg">
+        Dernière mise à jour: <br>
+        <b id="lastSeen" class="text-sky-300 text-sm">--:--</b>
+        <button onclick="updateData()" class="refresh-icon-btn" id="refreshBtn">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </span>
+</div>
 
           
         </div>
@@ -109,46 +141,61 @@
             finalPath = "devices/" + deviceId;
         }
 
-        const deviceRef = db.ref(finalPath);
-        deviceRef.on("value", (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                const tank = data.tank || 0;
-                document.getElementById('tankValue').innerText = tank;
-                document.getElementById('waterLevel').style.height = tank + "%";
-                
-                if (data.water_height !== undefined) {
-                    document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
-                }
+        // ... (نفس كود الإعداد والـ Auth) ...
 
-                if (data.last_seen) {
-                    const date = new Date(data.last_seen);
-                    const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
-                    document.getElementById('lastSeen').innerText = date.toLocaleString('fr-FR', options);
-                }
+const deviceRef = db.ref(finalPath);
 
-                if(data.config) {
-                    document.getElementById('totalH').innerText = data.config.totalHeight || "--";
-                    document.getElementById('offsetV').innerText = data.config.sensorOffset || "--";
-                }
-
-                const waterColor = document.getElementById('waterLevel');
-                waterColor.style.filter = (tank < 20) ? "hue-rotate(300deg)" : "hue-rotate(0deg)";
-
-                const valEl = document.getElementById('tankValue');
-                if(tank < 10) {
-                    valEl.classList.add('animate-pulse', 'text-red-500');
-                    valEl.classList.remove('text-white');
-                } else {
-                    valEl.classList.remove('animate-pulse', 'text-red-500');
-                    valEl.classList.add('text-white');
-                }
+// دالة لجلب البيانات مرة واحدة فقط
+function updateData() {
+    // استخدمنا .once('value') بدلاً من .on('value')
+    deviceRef.once("value").then((snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const tank = data.tank || 0;
+            document.getElementById('tankValue').innerText = tank;
+            document.getElementById('waterLevel').style.height = tank + "%";
+            
+            if (data.water_height !== undefined) {
+                document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
             }
-        }, (error) => {
-            console.error("Firebase Error:", error);
-      
-   //   document.getElementById('status').className = "text-red-500 font-bold";
+
+            if (data.last_seen) {
+                const date = new Date(data.last_seen);
+                const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
+                document.getElementById('lastSeen').innerText = date.toLocaleString('fr-FR', options);
+            }
+
+            if(data.config) {
+                document.getElementById('totalH').innerText = data.config.totalHeight || "--";
+                document.getElementById('offsetV').innerText = data.config.sensorOffset || "--";
+            }
+
+            // تحديث الألوان والتنسيقات
+            const waterColor = document.getElementById('waterLevel');
+            waterColor.style.filter = (tank < 20) ? "hue-rotate(300deg)" : "hue-rotate(0deg)";
+
+            const valEl = document.getElementById('tankValue');
+            if(tank < 10) {
+                valEl.classList.add('animate-pulse', 'text-red-500');
+                valEl.classList.remove('text-white');
+            } else {
+                valEl.classList.remove('animate-pulse', 'text-red-500');
+                valEl.classList.add('text-white');
+            }
+        }
+        
+        // بعد جلب البيانات، نقوم بقطع الاتصال فوراً لتوفير الـ Concurrent Connections
+        // ملاحظة: فيربيز يغلق الاتصال تلقائياً بعد فترة قصيرة عند استخدام once
+    }).catch((error) => {
+        console.error("Firebase Error:", error);
     });
+}
+
+// استدعاء الدالة عند تحميل الصفحة لأول مرة
+updateData();
+
+// اختياري: إضافة زر "تحديث" يدوي بدلاً من تحديث الصفحة كاملة
+//  <button onclick="updateData()">Mettre à jour</button>
   </script>
 </body>
 </html>
