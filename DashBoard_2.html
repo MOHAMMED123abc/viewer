@@ -115,80 +115,97 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAYge0HyYiL0-vlXnnlB_FqAZvocb_lz9Y",
-            databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
-        };
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAYge0HyYiL0-vlXnnlB_FqAZvocb_lz9Y",
+        databaseURL: "https://esp32-tank-project-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const functions = firebase.functions(); // تعريف الدوال
+
+    // دخول مجهول
+    firebase.auth().signInAnonymously();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const deviceId = urlParams.get('device') || 'device0002'; 
+    document.getElementById('devID').textContent = deviceId;
+
+    let finalPath = deviceId.startsWith('device') ? deviceId : "devices/" + deviceId;
+    const deviceRef = db.ref(finalPath);
+
+    // دالة تحديث البيانات (استدعاء الدالة السحابية)
+    function updateData() {
+        const icon = document.getElementById('refreshIcon');
+        const btnText = document.querySelector('#mainUpdateBtn span');
         
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        icon.classList.add('spinning');
+        btnText.innerText = "Demande en cours...";
 
-        // دخول مجهول
-        firebase.auth().signInAnonymously();
+        // استدعاء دالة requestReading من السيرفر
+        const requestReading = functions.httpsCallable('requestReading');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const deviceId = urlParams.get('device') || 'device0002'; 
-        document.getElementById('devID').textContent = deviceId;
-
-        let finalPath = deviceId.startsWith('device') ? deviceId : "devices/" + deviceId;
-        const deviceRef = db.ref(finalPath);
-
-        function updateData() {
-            const icon = document.getElementById('refreshIcon');
-            const valEl = document.getElementById('tankValue');
-            const waterColor = document.getElementById('waterLevel');
-            
-            icon.classList.add('spinning');
-
-            // جلب لمرة واحدة لتقليل الاتصالات المتزامنة
-            deviceRef.once("value").then((snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    const tank = data.tank || 0;
-                    valEl.innerText = tank;
-                    waterColor.style.height = tank + "%";
-
-                    // تنبيه اللون الأحمر عند انخفاض المستوى
-                    if (tank < 15) {
-                        valEl.classList.add('animate-pulse', 'text-red-500');
-                        valEl.classList.remove('text-white');
-                        waterColor.style.filter = "hue-rotate(300deg)"; 
-                    } else {
-                        valEl.classList.remove('animate-pulse', 'text-red-500');
-                        valEl.classList.add('text-white');
-                        waterColor.style.filter = "hue-rotate(0deg)";
-                    }
-
-                    if (data.water_height !== undefined) {
-                        document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
-                    }
-
-                    if (data.last_seen) {
-                        const date = new Date(data.last_seen);
-                        const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
-                        document.getElementById('lastSeen').innerText = date.toLocaleString('fr-FR', options);
-                    }
-
-                    if(data.config) {
-                        document.getElementById('totalH').innerText = data.config.totalHeight || "--";
-                        document.getElementById('offsetV').innerText = data.config.sensorOffset || "--";
-                    }
-                }
+        requestReading({ deviceID: deviceId })
+            .then((result) => {
+                console.log("Success:", result.data);
+                btnText.innerText = "Commande Envoyée !";
                 
-                setTimeout(() => icon.classList.remove('spinning'), 1000);
-            }).catch((error) => {
-                console.error("Firebase Error:", error);
+                // انتظار 3 ثوانٍ ليعطي فرصة للـ ESP للإرسال ثم تحديث الشاشة
+                setTimeout(() => {
+                    fetchFromRTDB(); 
+                    btnText.innerText = "Appuyez pour mise à jour";
+                    icon.classList.remove('spinning');
+                }, 3000);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("Erreur: " + error.message);
                 icon.classList.remove('spinning');
+                btnText.innerText = "Appuyez pour mise à jour";
             });
-        }
+    }
 
-        // تشغيل الجلب عند التحميل الأول
-        updateData();
-    </script>
+    // دالة جلب البيانات من قاعدة البيانات لعرضها
+    function fetchFromRTDB() {
+        const valEl = document.getElementById('tankValue');
+        const waterColor = document.getElementById('waterLevel');
+
+        deviceRef.once("value").then((snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const tank = data.tank || 0;
+                valEl.innerText = tank;
+                waterColor.style.height = tank + "%";
+
+                // تنسيق الألوان والتنبيهات
+                if (tank < 15) {
+                    valEl.className = 'text-8xl font-black animate-pulse text-red-500 value-font';
+                    waterColor.style.filter = "hue-rotate(300deg)"; 
+                } else {
+                    valEl.className = 'text-8xl font-black text-white value-font';
+                    waterColor.style.filter = "hue-rotate(0deg)";
+                }
+
+                if (data.water_height !== undefined) {
+                    document.getElementById('waterHeight').innerText = data.water_height.toFixed(1);
+                }
+
+                if (data.config) {
+                    document.getElementById('totalH').innerText = data.config.totalHeight || "--";
+                    document.getElementById('offsetV').innerText = data.config.sensorOffset || "--";
+                }
+            }
+        });
+    }
+
+    // تشغيل الجلب عند التحميل الأول لرؤية آخر حالة مسجلة
+    fetchFromRTDB();
+</script>
 </body>
 </html>
